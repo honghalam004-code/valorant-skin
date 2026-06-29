@@ -1,7 +1,7 @@
 import streamlit as st
 
 def main():
-    st.set_page_config(page_title="FPS AIMLAB RED DOT ENGINE", layout="wide")
+    st.set_page_config(page_title="FPS AIMLAB RAW INPUT ENGINE", layout="wide")
 
     st.markdown("""
         <style>
@@ -14,8 +14,8 @@ def main():
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<h2 style='text-align:center; color:#00f2fe; font-weight:900;'>🎯 AIMLAB: RED DOT SENSITIVITY ENGINE</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#4b5563; font-size:14px;'>빨간색 점 조준선 | 실시간 마우스 감도 튜닝 | 난이도 레벨 제어 | 무반동 레이저 에임</p>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:#00f2fe; font-weight:900;'>🎯 AIMLAB: RAW INPUT SENSITIVITY ENGINE</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#4b5563; font-size:14px;'>포인터 잠금 기반 FPS 리얼 감도 구현 | 빨간 점 에임 | 난이도 레벨 제어 | 무반동</p>", unsafe_allow_html=True)
 
     html_src = """
     <div style="max-width:1240px; margin:0 auto; display:flex; gap:20px; justify-content:center;">
@@ -35,19 +35,24 @@ def main():
                 <button onclick="startSession()" id="start-btn" style="background:#34d399; color:black; border:none; padding:8px 18px; font-weight:bold; cursor:pointer; border-radius:4px;">▶ 훈련 시작</button>
             </div>
             
-            <canvas id="aimCanvas" width="860" height="510" style="background:#090b11; border:2px solid #1f2937; border-radius:6px; cursor:none;"></canvas>
+            <div style="position:relative;">
+                <canvas id="aimCanvas" width="860" height="510" style="background:#090b11; border:2px solid #1f2937; border-radius:6px; cursor:crosshair;"></canvas>
+                <div id="lock-notice" style="position:absolute; top:20px; left:50%; transform:translateX(-50%); background:rgba(239,68,68,0.85); color:white; padding:6px 16px; border-radius:4px; font-size:12px; font-weight:bold;">
+                    ⚠️ 화면을 클릭하여 마우스를 게임에 고정하세요 (해제: ESC)
+                </div>
+            </div>
         </div>
 
         <div style="width:280px; display:flex; flex-direction:column; gap:15px; text-align:left;">
             
             <div style="background:#111827; padding:16px; border-radius:6px; border:1px solid #1f2937;">
-                <div style="color:#34d399; font-size:12px; font-weight:bold; letter-spacing:1px; margin-bottom:8px;">⚙️ MOUSE SENSITIVITY</div>
+                <div style="color:#34d399; font-size:12px; font-weight:bold; letter-spacing:1px; margin-bottom:8px;">⚙️ REAL FPS SENSITIVITY</div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <span style="font-size:13px; color:#9ca3af;">현재 감도 수치</span>
+                    <span style="font-size:13px; color:#9ca3af;">조준선 감도 배율</span>
                     <span style="font-size:16px; font-weight:bold; color:#34d399; font-family:monospace;" id="sens-val">1.0</span>
                 </div>
-                <input type="range" id="sens-slider" min="0.1" max="5.0" step="0.1" value="1.0" oninput="updateSensitivity(this.value)" style="width:100%; accent-color:#34d399; cursor:pointer;">
-                <div style="font-size:11px; color:#6b7280; margin-top:6px; line-height:1.3;">* 인게임 마우스 속도를 배율로 조절합니다. 본인 신체 밸런스에 맞게 설정하세요.</div>
+                <input type="range" id="sens-slider" min="0.1" max="4.0" step="0.05" value="1.0" oninput="updateSensitivity(this.value)" style="width:100%; accent-color:#34d399; cursor:pointer;">
+                <div style="font-size:11px; color:#6b7280; margin-top:6px; line-height:1.4;">* 윈도우 좌표계를 무시하고 마우스 센서의 순수 회전 변화량만 계산하는 하드웨어 정밀 동기화 모드입니다.</div>
             </div>
 
             <div style="background:#111827; padding:16px; border-radius:6px; border:1px solid #1f2937;">
@@ -75,6 +80,7 @@ def main():
     <script>
         const canvas = document.getElementById('aimCanvas');
         const ctx = canvas.getContext('2d');
+        const lockNotice = document.getElementById('lock-notice');
 
         // 상태 데이터 메커니즘
         let mode = 'gridshot';
@@ -86,40 +92,70 @@ def main():
         let totalShots = 0;
         let hitShots = 0;
 
-        // 조준선 좌표 제어 변수
+        // 🎯 로우인풋 전용 인게임 조준선 좌표 (화면 중심 시작)
         let mouseX = 430, mouseY = 255;
-        let realX = 430, realY = 255;
+        let isLocked = false;
 
         let highScores = { gridshot: 0, tracking: 0, microflex: 0 };
         let targets = [];
 
         const diffSpecs = {
-            1: { radiusBonus: 1.3, speedBonus: 0.5, desc: "<strong>🟢 레벨 1 사양:</strong><br>과녁 반경: 기본 1.3배 확대<br>이동 속도: 0.5배 감속 (기초 훈련)" },
-            2: { radiusBonus: 1.0, speedBonus: 1.0, desc: "<strong>🟡 레벨 2 사양:</strong><br>과녁 반경: 표준 실전 규격<br>이동 속도: 1.0배 표준 속도 기동" },
+            1: { radiusBonus: 1.3, speedBonus: 0.5, desc: "<strong>🟢 레벨 1 사양:</strong><br>과녁 반경: 기본 1.3배 확대<br>이동 속도: 0.5배 감속" },
+            2: { radiusBonus: 1.0, speedBonus: 1.0, desc: "<strong>🟡 레벨 2 사양:</strong><br>과녁 반경: 표준 실전 규격<br>이동 속도: 1.0배 표준 속도" },
             3: { radiusBonus: 0.7, speedBonus: 1.5, desc: "<strong>🟠 레벨 3 사양:</strong><br>과녁 반경: 30% 압축 축소<br>이동 속도: 1.5배 고속 난선형 무빙" },
             4: { radiusBonus: 0.4, speedBonus: 2.3, desc: "<strong>🔴 레벨 4 사양:</strong><br>과녁 반경: 초미세 픽셀 크기<br>이동 속도: 2.3배 하이퍼 소닉 무빙" }
         };
 
-        function loadSavedScores() {
-            if (localStorage.getItem('aimlab_diff_sens_v6')) {
-                highScores = JSON.parse(localStorage.getItem('aimlab_diff_sens_v6'));
+        // 🖥️ Pointer Lock API 마우스 잠금 제어 엔진
+        canvas.addEventListener('click', () => {
+            if(!isLocked) {
+                canvas.requestPointerLock();
             }
-            if (localStorage.getItem('aimlab_saved_sens')) {
-                sensitivity = parseFloat(localStorage.getItem('aimlab_saved_sens'));
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            if (document.pointerLockElement === canvas) {
+                isLocked = true;
+                lockNotice.style.display = 'none';
+            } else {
+                isLocked = false;
+                lockNotice.style.display = 'block';
+            }
+        });
+
+        // ⚙️ 진짜 FPS 게임 방식의 감도 연산 리스너
+        document.addEventListener('mousemove', (e) => {
+            if (!isLocked) return; // 화면이 잠기지 않았을 때는 브라우저 기본 이동 사용 안 함
+
+            // 하드웨어 마우스 고유의 순수 드래그 변화량(movement)에 감도만 곱해 좌표를 더해줍니다.
+            mouseX += e.movementX * sensitivity * 0.75;
+            mouseY += e.movementY * sensitivity * 0.75;
+
+            // 훈련장 화면 밖으로 조준선이 이탈하지 않도록 차단
+            mouseX = Math.max(0, Math.min(canvas.width, mouseX));
+            mouseY = Math.max(0, Math.min(canvas.height, mouseY));
+        });
+
+        function loadSavedScores() {
+            if (localStorage.getItem('aimlab_diff_lock_hs')) {
+                highScores = JSON.parse(localStorage.getItem('aimlab_diff_lock_hs'));
+            }
+            if (localStorage.getItem('aimlab_saved_lock_sens')) {
+                sensitivity = parseFloat(localStorage.getItem('aimlab_saved_lock_sens'));
                 document.getElementById('sens-slider').value = sensitivity;
-                document.getElementById('sens-val').innerText = sensitivity.toFixed(1);
+                document.getElementById('sens-val').innerText = sensitivity.toFixed(2);
             }
             renderScoresUI();
         }
 
         function saveScores() {
-            localStorage.setItem('aimlab_diff_sens_v6', JSON.stringify(highScores));
+            localStorage.setItem('aimlab_diff_lock_hs', JSON.stringify(highScores));
         }
 
         function updateSensitivity(val) {
             sensitivity = parseFloat(val);
-            document.getElementById('sens-val').innerText = sensitivity.toFixed(1);
-            localStorage.setItem('aimlab_saved_sens', sensitivity);
+            document.getElementById('sens-val').innerText = sensitivity.toFixed(2);
+            localStorage.setItem('aimlab_saved_lock_sens', sensitivity);
         }
 
         function renderScoresUI() {
@@ -208,6 +244,10 @@ def main():
 
         function startSession() {
             if (isPlaying) return;
+            if (!isLocked) {
+                alert("먼저 어두운 훈련장 화면을 클릭하여 마우스를 게임 창에 고정해 주세요!");
+                return;
+            }
             isPlaying = true;
             score = 0; timeLeft = 30.0; totalShots = 0; hitShots = 0;
             initTargets();
@@ -227,23 +267,8 @@ def main():
             }
         }
 
-        canvas.addEventListener('mousemove', (e) => {
-            let rect = canvas.getBoundingClientRect();
-            let targetX = (e.clientX - rect.left) * (canvas.width / rect.width);
-            let targetY = (e.clientY - rect.top) * (canvas.height / rect.height);
-
-            let deltaX = targetX - realX;
-            let deltaY = targetY - realY;
-
-            mouseX = Math.max(0, Math.min(canvas.width, mouseX + deltaX * sensitivity));
-            mouseY = Math.max(0, Math.min(canvas.height, mouseY + deltaY * sensitivity));
-
-            realX = targetX;
-            realY = targetY;
-        });
-
         canvas.addEventListener('mousedown', () => {
-            if (!isPlaying) return;
+            if (!isPlaying || !isLocked) return;
             totalShots++;
             let hitAny = false;
 
@@ -305,16 +330,22 @@ def main():
                 });
             } else {
                 ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText("우측에서 감도와 난이도(레벨)를 세팅하고 [▶ 훈련 시작]을 누르세요.", canvas.width/2, canvas.height/2);
+                if(!isLocked) {
+                    ctx.fillText("검은색 훈련장 화면을 마우스로 클릭하여 활성화하세요.", canvas.width/2, canvas.height/2);
+                } else {
+                    ctx.fillText("감도와 난이도 레벨을 맞추고 상단 [▶ 훈련 시작]을 누르세요.", canvas.width/2, canvas.height/2);
+                }
             }
 
-            // 🛠️ 핵심 변경 사항: 완전 무반동 고정식 '빨간색 점(Red Dot)' 조준선 렌더링 Engine
-            ctx.save();
-            ctx.fillStyle = '#FF0000'; // 선명한 핫 레드 컬러 고정
-            ctx.beginPath();
-            ctx.arc(mouseX, mouseY, 2.5, 0, Math.PI * 2); // 반경 2.5px의 깔끔한 점 형태
-            ctx.fill();
-            ctx.restore();
+            // 🛠️ 완전 무반동 고정식 '빨간색 점(Red Dot)' 조준선 렌더링 Engine
+            if (isLocked) {
+                ctx.save();
+                ctx.fillStyle = '#FF0000';
+                ctx.beginPath();
+                ctx.arc(mouseX, mouseY, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
 
             requestAnimationFrame(loop);
         }
