@@ -1,0 +1,6 @@
+git init
+git add app.py
+git commit -m "Jett Champions skin showcase"
+git branch -M main
+git remote add origin 본인_깃허브_주소
+git push -u origin main
