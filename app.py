@@ -1,222 +1,290 @@
 import streamlit as st
 
 def main():
-    st.set_page_config(page_title="TACTICAL AIM TRAINER PRO", layout="wide")
+    st.set_page_config(page_title="AIMLAB PRO: CORE ENGINE", layout="wide")
 
-    # 🎨 오직 에임에만 집중할 수 있는 깔끔한 다크 테마
+    # 🎨 에임 몰입도를 높이는 사이버 다크 테마
     st.markdown("""
         <style>
-        .main { background-color: #0b0c10; color: #c5c6c7; font-family: 'Segoe UI', monospace; }
+        .main { background-color: #08090c; color: #d1d5db; font-family: 'Segoe UI', monospace; }
         .stButton > button {
-            background: linear-gradient(135deg, #45f3ff, #1f51ff) !important;
-            color: #000000 !important; font-weight: bold !important; border: none !important;
-            padding: 10px 20px; border-radius: 4px; width: 100%; transition: 0.2s;
-        }
-        .stButton > button:hover {
-            box-shadow: 0 0 15px #45f3ff; transform: scale(1.01);
+            background: linear-gradient(135deg, #00f2fe, #4facfe) !important;
+            color: #08090c !important; font-weight: bold !important; border: none !important;
+            padding: 12px; border-radius: 4px; width: 100%; letter-spacing: 1px;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<h2 style='text-align:center; color:#45f3ff; font-weight:800; letter-spacing:1px;'>🎯 TACTICAL AIM LAB PRO</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#666; font-size:14px;'>불필요한 그래픽을 배제한 순수 에임 트레이닝 및 메커니즘 측정 엔진</p>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:#00f2fe; font-weight:900; letter-spacing:1px;'>🎯 AIMLAB METRICS PRO</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#4b5563; font-size:14px;'>레벨 시스템 및 리더보드가 탑재된 반응형 에임 트레이너</p>", unsafe_allow_html=True)
 
+    # JavaScript 기반 고성능 훈련장 컴포넌트 이식
     html_src = """
-    <div style="max-width:1100px; margin:0 auto; text-align:center;">
-        <div style="display:flex; justify-content:space-between; align-items:center; background:#1f2833; padding:12px 24px; border-radius:6px; margin-bottom:15px; border:1px solid #45f3ff;">
-            <div style="display:flex; gap:10px;">
-                <button onclick="setMode('gridshot')" id="m-grid" style="background:#45f3ff; color:black; border:none; padding:8px 16px; font-weight:bold; cursor:pointer; border-radius:4px;">🎯 GRIDSHOT</button>
-                <button onclick="setMode('tracking')" id="m-track" style="background:#0b0c10; color:#45f3ff; border:1px solid #45f3ff; padding:8px 16px; font-weight:bold; cursor:pointer; border-radius:4px;">🔄 TRACKING</button>
+    <div style="max-width:1150px; margin:0 auto; display:flex; gap:20px; justify-content:center;">
+        
+        <div style="flex: 1; text-align:center;">
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#111827; padding:12px 20px; border-radius:6px; margin-bottom:12px; border:1px solid #1f2937;">
+                <div style="display:flex; gap:8px;">
+                    <button onclick="changeMode('gridshot')" id="m-grid" style="background:#00f2fe; color:black; border:none; padding:8px 16px; font-weight:bold; cursor:pointer; border-radius:4px;">🎯 GRIDSHOT</button>
+                    <button onclick="changeMode('tracking')" id="m-track" style="background:#08090c; color:#00f2fe; border:1px solid #00f2fe; padding:8px 16px; font-weight:bold; cursor:pointer; border-radius:4px;">🔄 TRACKING</button>
+                </div>
+                <div style="display:flex; gap:20px; font-family:monospace; font-size:15px; font-weight:bold;">
+                    <div style="color:#00f2fe;" id="ui-score">SCORE: 0</div>
+                    <div style="color:#34d399;" id="ui-acc">ACC: 100%</div>
+                    <div style="color:#f87171;" id="ui-time">TIME: 30.0s</div>
+                </div>
+                <button onclick="startSession()" id="start-btn" style="background:#34d399; color:black; border:none; padding:8px 20px; font-weight:bold; cursor:pointer; border-radius:4px;">▶ 훈련 시작</button>
             </div>
-            <div style="display:flex; gap:25px; font-family:monospace; font-size:16px; font-weight:bold;">
-                <div style="color:#45f3ff;" id="ui-score">SCORE: 0</div>
-                <div style="color:#66fcf1;" id="ui-acc">ACCURACY: 100%</div>
-                <div style="color:#ff4545;" id="ui-time">TIME: 30.0s</div>
-            </div>
-            <div>
-                <button onclick="resetTraining()" style="background:#ff4545; color:white; border:none; padding:8px 16px; font-weight:bold; cursor:pointer; border-radius:4px;">RESET</button>
-            </div>
+            
+            <canvas id="aimCanvas" width="840" height="500" style="background:#0b0f17; border:2px solid #1f2937; border-radius:6px; cursor:none;"></canvas>
         </div>
 
-        <canvas id="aimCanvas" width="900" height="540" style="background:#121212; border:2px solid #1f2833; border-radius:6px; cursor:none;"></canvas>
+        <div style="width:280px; display:flex; flex-direction:column; gap:15px; text-align:left;">
+            <div style="background:#111827; padding:16px; border-radius:6px; border:1px solid #1f2937;">
+                <div style="color:#00f2fe; font-size:12px; font-weight:bold; letter-spacing:1px;">USER PROFILE</div>
+                <div style="font-size:22px; font-weight:900; color:white; margin:5px 0;" id="prof-lvl">LV. 1</div>
+                <div style="font-size:11px; color:#9ca3af; margin-bottom:4px;" id="prof-exp">EXP: 0 / 1000</div>
+                <div style="width:100%; background:#1f2937; height:6px; border-radius:3px; overflow:hidden;">
+                    <div id="exp-bar" style="width:0%; background:#00f2fe; height:100%; transition:0.3s;"></div>
+                </div>
+            </div>
+
+            <div style="background:#111827; padding:16px; border-radius:6px; border:1px solid #1f2937; flex:1; display:flex; flex-direction:column;">
+                <div style="color:#00f2fe; font-size:12px; font-weight:bold; letter-spacing:1px; margin-bottom:10px;">🏆 LOCAL LEADERBOARD</div>
+                <div id="leaderboard-list" style="font-family:monospace; font-size:13px; display:flex; flex-direction:column; gap:8px; color:#e5e7eb;">
+                    </div>
+                <button onclick="clearLeaderboard()" style="margin-top:auto; background:transparent; color:#6b7280; border:1px solid #374151; padding:5px; font-size:11px; cursor:pointer; border-radius:4px;">기록 초기화</button>
+            </div>
+        </div>
     </div>
 
     <script>
         const canvas = document.getElementById('aimCanvas');
         const ctx = canvas.getContext('2d');
 
-        // 시스템 상태 변수
-        let mode = 'gridshot'; // 'gridshot' 또는 'tracking'
-        let isRunning = false;
+        // 상태 변수
+        let mode = 'gridshot';
+        let isPlaying = false;
         let score = 0;
         let timeLeft = 30.0;
         let totalShots = 0;
         let hitShots = 0;
-        let mouseX = 450, mouseY = 270;
+        let mouseX = 420, mouseY = 250;
 
-        // 타겟 데이터 배열 (그리드샷은 여러 개, 트래킹은 1개 사용)
+        // 레벨 및 저장 데이터
+        let userLevel = 1;
+        let userExp = 0;
+        let highScores = { gridshot: 0, tracking: 0 };
+
+        // 물리 연산 오브젝트
         let targets = [];
+        let recoilActive = false;
+        let recoilFrame = 0;
 
-        function setMode(m) {
+        // 초기 로컬 스토리지 데이터 로드
+        function loadSavedData() {
+            if(localStorage.getItem('aimlab_lvl')) userLevel = parseInt(localStorage.getItem('aimlab_lvl'));
+            if(localStorage.getItem('aimlab_exp')) userExp = parseInt(localStorage.getItem('aimlab_exp'));
+            if(localStorage.getItem('aimlab_hs')) highScores = JSON.parse(localStorage.getItem('aimlab_hs'));
+            updateProfileUI();
+            renderLeaderboard();
+        }
+
+        function saveData() {
+            localStorage.setItem('aimlab_lvl', userLevel);
+            localStorage.setItem('aimlab_exp', userExp);
+            localStorage.setItem('aimlab_hs', JSON.stringify(highScores));
+        }
+
+        function updateProfileUI() {
+            document.getElementById('prof-lvl').innerText = "LV. " + userLevel;
+            let nextExp = userLevel * 1000;
+            document.getElementById('prof-exp').innerText = "EXP: " + userExp + " / " + nextExp;
+            document.getElementById('exp-bar').style.width = (userExp / nextExp * 100) + "%";
+        }
+
+        function renderLeaderboard() {
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = `
+                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #374151; padding-bottom:4px; color:#9ca3af;">
+                    <span>MODE</span><span>HIGH SCORE</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span>🎯 GRIDSHOT</span><span style="color:#00f2fe; font-weight:bold;">${highScores.gridshot}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span>🔄 TRACKING</span><span style="color:#00f2fe; font-weight:bold;">${highScores.tracking}</span>
+                </div>
+            `;
+        }
+
+        function clearLeaderboard() {
+            highScores = { gridshot: 0, tracking: 0 };
+            userLevel = 1; userExp = 0;
+            saveData(); updateProfileUI(); renderLeaderboard();
+        }
+
+        function changeMode(m) {
+            if(isPlaying) return; // 게임 중 모드 변경 차단
             mode = m;
-            document.getElementById('m-grid').style.background = (m === 'gridshot') ? '#45f3ff' : '#0b0c10';
-            document.getElementById('m-grid').style.color = (m === 'gridshot') ? 'black' : '#45f3ff';
-            document.getElementById('m-track').style.background = (m === 'tracking') ? '#45f3ff' : '#0b0c10';
-            document.getElementById('m-track').style.color = (m === 'tracking') ? 'black' : '#45f3ff';
-            resetTraining();
+            document.getElementById('m-grid').style.background = (m === 'gridshot') ? '#00f2fe' : '#08090c';
+            document.getElementById('m-grid').style.color = (m === 'gridshot') ? 'black' : '#00f2fe';
+            document.getElementById('m-track').style.background = (m === 'tracking') ? '#00f2fe' : '#08090c';
+            document.getElementById('m-track').style.color = (m === 'tracking') ? 'black' : '#00f2fe';
+            initTargets();
         }
 
-        function createTarget() {
-            let t = {
-                x: 60 + Math.random() * (canvas.width - 120),
-                y: 60 + Math.random() * (canvas.height - 120),
-                radius: mode === 'gridshot' ? 20 : 25,
-                // 트래킹 모드용 속도 벡터
-                vx: (Math.random() - 0.5) * 5,
-                vy: (Math.random() - 0.5) * 5
-            };
-            return t;
-        }
-
-        function resetTraining() {
-            score = 0;
-            timeLeft = 30.0;
-            totalShots = 0;
-            hitShots = 0;
-            isRunning = true;
+        function initTargets() {
             targets = [];
-
-            if (mode === 'gridshot') {
-                // 화면에 상시 3개의 타겟 유지
-                for(let i=0; i<3; i++) targets.push(createTarget());
+            if(mode === 'gridshot') {
+                for(let i=0; i<3; i++) targets.push(spawnTargetObject());
             } else {
-                // 트래킹은 움직이는 타겟 1개
-                targets.push(createTarget());
+                targets.push(spawnTargetObject());
             }
-            updateDashboard();
         }
 
-        function updateDashboard() {
-            document.getElementById('ui-score').innerText = "SCORE: " + score;
-            let acc = totalShots > 0 ? Math.round((hitShots / totalShots) * 100) : 100;
-            document.getElementById('ui-acc').innerText = "ACCURACY: " + acc + "%";
-            document.getElementById('ui-time').innerText = "TIME: " + timeLeft.toFixed(1) + "s";
+        function spawnTargetObject() {
+            return {
+                x: 50 + Math.random() * (canvas.width - 100),
+                y: 50 + Math.random() * (canvas.height - 100),
+                radius: mode === 'gridshot' ? 18 : 22,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6
+            };
         }
 
-        // 마우스 무브 이벤트 연동
+        function startSession() {
+            if(isPlaying) return;
+            isPlaying = true;
+            score = 0; timeLeft = 30.0; totalShots = 0; hitShots = 0;
+            initTargets();
+            document.getElementById('start-btn').style.background = '#4b5563';
+            document.getElementById('start-btn').innerText = "⏱ 훈련 중...";
+        }
+
+        function endSession() {
+            isPlaying = false;
+            document.getElementById('start-btn').style.background = '#34d399';
+            document.getElementById('start-btn').innerText = "▶ 훈련 시작";
+            
+            // 점수 기록 검증 및 리더보드 갱신
+            if(score > highScores[mode]) {
+                highScores[mode] = score;
+            }
+            
+            // 경험치 지급 및 레벨업 연산
+            userExp += Math.floor(score / 10);
+            let nextExp = userLevel * 1000;
+            if(userExp >= nextExp) {
+                userExp -= nextExp;
+                userLevel++;
+            }
+            
+            saveData(); updateProfileUI(); renderLeaderboard();
+        }
+
         canvas.addEventListener('mousemove', (e) => {
             let rect = canvas.getBoundingClientRect();
             mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
             mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
         });
 
-        // 마우스 클릭 (격발 판정)
         canvas.addEventListener('mousedown', () => {
-            if (!isRunning) {
-                resetTraining(); // 끝났을 때 클릭하면 재시작
-                return;
-            }
+            if(!isPlaying) return;
 
             totalShots++;
+            recoilActive = true; recoilFrame = 0; // 격발 반동 트리거 활성화
             let hitAny = false;
 
-            for (let i = 0; i < targets.length; i++) {
+            for(let i=0; i<targets.length; i++) {
                 let dist = Math.hypot(mouseX - targets[i].x, mouseY - targets[i].y);
-                if (dist <= targets[i].radius) {
+                if(dist <= targets[i].radius) {
                     hitShots++;
                     score += 100;
                     hitAny = true;
-                    
-                    if (mode === 'gridshot') {
-                        targets[i] = createTarget(); // 맞춘 타겟은 즉시 무작위 재생성
-                    }
+                    if(mode === 'gridshot') targets[i] = spawnTargetObject();
                     break;
                 }
             }
-
-            if (!hitAny && mode === 'gridshot') {
-                score = Math.max(0, score - 30); // 빗나감 감점 (그리드샷 전용)
-            }
+            if(!hitAny && mode === 'gridshot') score = Math.max(0, score - 20);
             updateDashboard();
         });
 
-        function renderLoop() {
-            // 배경 청소 및 깔끔한 매트 차콜 톤 바닥
-            ctx.fillStyle = '#121212';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        function updateDashboard() {
+            document.getElementById('ui-score').innerText = "SCORE: " + score;
+            let acc = totalShots > 0 ? Math.round((hitShots / totalShots) * 100) : 100;
+            document.getElementById('ui-acc').innerText = "ACC: " + acc + "%";
+            document.getElementById('ui-time').innerText = "TIME: " + timeLeft.toFixed(1) + "s";
+        }
 
-            // 보이지 않는 격자선 가이드라인
-            ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1;
-            for(let i=0; i<canvas.width; i+=60) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+        function loop() {
+            ctx.fillStyle = '#0b0f17'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 배경 스팅어 격자선 드로우
+            ctx.strokeStyle = '#111827'; ctx.lineWidth = 1;
+            for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+            for(let j=0; j<canvas.height; j+=40) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
 
-            if (isRunning) {
-                // 시간 감소 처리
+            if(isPlaying) {
                 timeLeft -= 1/60;
-                if (timeLeft <= 0) {
-                    timeLeft = 0;
-                    isRunning = false;
-                }
+                if(timeLeft <= 0) { timeLeft = 0; endSession(); }
                 updateDashboard();
 
-                // 모드별 타겟 물리 연산 및 렌더링
+                // 타겟 그리기 및 이동 물리 연산
                 targets.forEach((t) => {
-                    if (mode === 'tracking') {
-                        // 트래킹 모드: 매 프레임 벽 충돌 및 이동 연산
-                        t.x += t.vx;
-                        t.y += t.vy;
-                        if (t.x - t.radius < 0 || t.x + t.radius > canvas.width) t.vx *= -1;
-                        if (t.y - t.radius < 0 || t.y + t.radius > canvas.height) t.vy *= -1;
+                    if(mode === 'tracking') {
+                        t.x += t.vx; t.y += t.vy;
+                        if(t.x - t.radius < 0 || t.x + t.radius > canvas.width) t.vx *= -1;
+                        if(t.y - t.radius < 0 || t.y + t.radius > canvas.height) t.vy *= -1;
 
-                        // 마우스가 실시간으로 원 안에 머물러 있는지 체크 (트래킹 점수 부여 방식)
+                        // 실시간 마우스 트래킹 유지 프레임 누적 점수 연산
                         let dist = Math.hypot(mouseX - t.x, mouseY - t.y);
-                        if (dist <= t.radius) {
-                            score += 1; // 유지 시 점수 누적 증가
-                        }
+                        if(dist <= t.radius) score += 2;
                     }
 
-                    // 🎯 프로급 조준용 하이테크 원형 타겟 디자인 (네온 사이언 컬러)
+                    // 테크니컬 원형 과녁 렌더링
                     ctx.save();
-                    ctx.strokeStyle = '#45f3ff';
-                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#00f2fe'; ctx.lineWidth = 3;
                     ctx.beginPath(); ctx.arc(t.x, t.y, t.radius, 0, Math.PI*2); ctx.stroke();
-                    
-                    // 내부 중심 도트
-                    ctx.fillStyle = '#45f3ff';
-                    ctx.beginPath(); ctx.arc(t.x, t.y, 4, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = 'rgba(0, 242, 254, 0.1)'; ctx.fill();
                     ctx.restore();
                 });
             } else {
-                // 종료 및 대기 화면 안내 메세지
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 20px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('TRAINING SELECTION READY', canvas.width/2, canvas.height/2 - 20);
-                ctx.fillStyle = '#666';
-                ctx.font = '14px sans-serif';
-                ctx.fillText('화면을 클릭하거나 상단의 RESET 버튼을 누르면 시작합니다.', canvas.width/2, canvas.height/2 + 15);
+                // 시작 대기 가이드라인 렌더링
+                ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '15px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText("상단의 [▶ 훈련 시작] 버튼을 누르면 세션이 개시됩니다.", canvas.width/2, canvas.height/2);
             }
 
-            // 🛠️ 정밀 십자선 크로스헤어 (정밀 사격용 도트 융합형)
+            // 🛠️ 격발 반동 모션(Recoil) 연동형 조준선 계산
             ctx.save();
-            ctx.strokeStyle = '#66fcf1';
-            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = '#34d399'; ctx.lineWidth = 1.5;
+            
+            let gap = 3; // 평상시 에임 오므라짐 격차
+            if(recoilActive) {
+                recoilFrame++;
+                // 발사 순간 십자선 벌어짐 수식 연산
+                gap += Math.sin((recoilFrame / 8) * Math.PI) * 8;
+                if(recoilFrame > 8) recoilActive = false;
+            }
+
             ctx.beginPath();
-            ctx.moveTo(mouseX - 10, mouseY); ctx.lineTo(mouseX - 2, mouseY);
-            ctx.moveTo(mouseX + 2, mouseY); ctx.lineTo(mouseX + 10, mouseY);
-            ctx.moveTo(mouseX, mouseY - 10); ctx.lineTo(mouseX, mouseY - 2);
-            ctx.moveTo(mouseX, mouseY + 2); ctx.lineTo(mouseX, mouseY + 10);
+            ctx.moveTo(mouseX - gap - 8, mouseY); ctx.lineTo(mouseX - gap, mouseY);
+            ctx.moveTo(mouseX + gap, mouseY); ctx.lineTo(mouseX + gap + 8, mouseY);
+            ctx.moveTo(mouseX, mouseY - gap - 8); ctx.lineTo(mouseX, mouseY - gap);
+            ctx.moveTo(mouseX, mouseY + gap); ctx.lineTo(mouseX, mouseY + gap + 8);
             ctx.stroke();
             ctx.restore();
 
-            requestAnimationFrame(renderLoop);
+            requestAnimationFrame(loop);
         }
 
-        // 초기 시작 가동
-        setMode('gridshot');
-        renderLoop();
+        // 초기 인스턴스 셋업 실행
+        loadSavedData();
+        initTargets();
+        loop();
     </script>
     """
-    st.components.v1.html(html_src, height=620)
+    st.components.v1.html(html_src, height=580)
 
 if __name__ == "__main__":
     main()
