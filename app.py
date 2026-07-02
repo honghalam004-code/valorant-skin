@@ -72,7 +72,7 @@ def main():
         <div style="background:#111625; padding:20px; border-radius:8px; border:1px solid #1f2942; display:flex; gap:25px; align-items:center;">
             <div style="flex:1;">
                 <p style="margin:0 0 10px 0; color:#e5e7eb; font-size:14px; font-weight:bold;">💡 마우스만 올리면 가동되는 편안한 서프 에임 판</p>
-                <p style="margin:0 0 15px 0; color:#9ca3af; font-size:12px; line-height:1.5;">수축 속도를 완화하여 조준선을 편안하게 옮겨 타격하기 좋습니다. 인공음이 없는 리얼 오디오가 적용되었습니다.</p>
+                <p style="margin:0 0 15px 0; color:#9ca3af; font-size:12px; line-height:1.5;">수축 속도를 완화하여 조준선을 편안하게 옮겨 타격하기 좋습니다. 인공음이 완전히 배제되었습니다.</p>
                 <div style="display:flex; gap:15px; font-family:monospace; font-size:14px; font-weight:bold; background:#070913; padding:12px; border-radius:6px; border:1px solid #1f2942;">
                     <div style="color:#a855f7;" id="mini-score">SCORE: 0</div>
                     <div style="color:#34d399;" id="mini-combo">COMBO: 0</div>
@@ -94,65 +94,47 @@ def main():
         const miniCanvas = document.getElementById('miniCanvas'); const miniCtx = miniCanvas.getContext('2d');
         const rangeCanvas = document.getElementById('rangeCanvas'); const rangeCtx = rangeCanvas.getContext('2d');
 
-        // --- 🎵 오디오 엔진 리액터: 인공음을 획기적으로 없앤 리얼 오디오 샘플러 캐시 시스템 ---
+        // --- 🎵 리얼 타격 숏 오디오 엔진 (네트워크 다운로드 및 가짜 기계음 완벽 제거) ---
         let audioCtx = null;
-        let soundBuffer = null;
-
-        // 에임트레이너 고유의 무겁고 선명한 타격음 오디오 리소스 버퍼 선행 비동기 다운로드
-        async function loadRealHitSound() {
-            try {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                // 깃허브 오픈소스 저장소에 보관된 고품질 에임 리얼 타격음 파일(WAV 프리셋 링크) 사용
-                const response = await fetch('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg'); // 대체 소스 안정 백업용 구조
-                // 가장 대중적이고 명확한 메탈 팝 핑 소리 로드
-                const soundUrl = 'https://raw.githubusercontent.com/the-prodigy/aim-assets/main/hit.wav'; 
-                
-                // 브라우저 샌드박스 안정성을 위해 신뢰성 높은 고품질 타격 오디오 주소 적용
-                const res = await fetch('https://raw.githubusercontent.com/rafaelreis-m/aim-trainer/master/audio/hit.wav');
-                const arrayBuffer = await res.arrayBuffer();
-                soundBuffer = await audioCtx.decodeAudioBuffer(arrayBuffer);
-            } catch(e) {
-                // 네트워크 폴백 가속 (오류 방지용 기본 오디오 리액터 내장)
-                console.log("Audio Resource Loaded Successfully.");
-            }
-        }
-
         function playValorantKillSound() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
 
-            if (soundBuffer) {
-                // 인공 합성음 방식이 아닌, 캐싱된 리얼 음원 파일을 그대로 재생하여 기계 기포음 100% 차단
-                let source = audioCtx.createBufferSource();
-                source.buffer = soundBuffer;
+                // 인공 비프음을 완전히 차단하기 위해 원음 0.04초짜리 리얼 화이트노이즈 스냅 버스트 버퍼 생성
+                let bufferSize = audioCtx.sampleRate * 0.04;
+                let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                let data = buffer.getChannelData(0);
                 
-                // 가슴을 울리는 무거운 중저음 컴프레서 가속 이퀄라이저 결합
-                let lowPass = audioCtx.createBiquadFilter();
-                lowPass.type = 'peaking';
-                lowPass.frequency.value = 150;
-                lowPass.Q.value = 2.0;
-                lowPass.gain.value = 6; 
+                // 귀에 거슬리는 인공적인 사인파를 지우고 타격 질감용 타임 노이즈 주입
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
 
-                source.connect(lowPass);
-                lowPass.connect(audioCtx.destination);
-                source.start(0);
-            } else {
-                // 만약 네트워크 지연으로 파일 로딩 안됐을 때만 예외 처리 레이어 가동 (귀에 무리 없는 자연 부드러운 저음 팝핑)
-                let now = audioCtx.currentTime;
-                let osc = audioCtx.createOscillator();
-                let gain = audioCtx.createGain();
-                osc.type = 'sine'; // 인공 비프음이 없는 순수 부드러운 파형 고정
-                osc.frequency.setValueAtTime(180, now);
-                osc.frequency.exponentialRampToValueAtTime(60, now + 0.12);
-                gain.gain.setValueAtTime(0.4, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(now); osc.stop(now + 0.12);
-            }
+                let noiseNode = audioCtx.createBufferSource();
+                noiseNode.buffer = buffer;
+
+                // 타격의 둔탁함과 청량함을 잡는 로우패스/하이패스 직렬 필터 레이어 구성
+                let lpFilter = audioCtx.createBiquadFilter();
+                lpFilter.type = 'lowpass';
+                lpFilter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+
+                let hpFilter = audioCtx.createBiquadFilter();
+                hpFilter.type = 'highpass';
+                hpFilter.frequency.setValueAtTime(150, audioCtx.currentTime);
+
+                let gainNode = audioCtx.createGain();
+                gainNode.gain.setValueAtTime(0.35, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+
+                noiseNode.connect(lpFilter);
+                lpFilter.connect(hpFilter);
+                hpFilter.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                noiseNode.start();
+            } catch(e) { console.log(e); }
         }
-
-        // 초기 실행 즉시 실제 오디오 다운로드 트리거
-        loadRealHitSound();
 
         // ========================================================
         // STAGE 1 전역 기믹 설계부
@@ -172,7 +154,7 @@ def main():
         };
 
         // ========================================================
-        // STAGE 2 & STAGE 3 (발로란트 레인지 오마주) 설계부
+        // STAGE 2 & STAGE 3 (발로란트 연습장) 설계부
         // ========================================================
         let isMiniHovered = false; let miniScore = 0; let miniCombo = 0; let miniTargets = [];
         
@@ -351,15 +333,17 @@ def main():
             } else { miniCtx.fillStyle = '#4b5563'; miniCtx.font = '12px sans-serif'; miniCtx.textAlign = 'center'; miniCtx.fillText("이곳에 커서를 가져오면 손풀기 타겟이 개방됩니다.", miniCanvas.width/2, miniCanvas.height/2); }
 
 
-            // STAGE 3 가동 연산
+            // STAGE 3 가동 연산 (★ 무제한 사격 연습장)
             rangeCtx.fillStyle = '#0b0f19'; rangeCtx.fillRect(0, 0, rangeCanvas.width, rangeCanvas.height);
-            rangeCtx.fillStyle = '#1e293b'; rangeCtx.fillRect(250, 260, 660, 8);
+            rangeCtx.fillStyle = '#1e293b'; rangeCtx.fillRect(250, 260, 660, 8); // 스폰 플랫폼 베이스라인
             
+            // 전광판 컨트롤 스위치
             rangeUIBox.forEach(box => {
                 rangeCtx.fillStyle = box.id === 'start' ? (isRangePlaying ? '#1e293b' : '#0f766e') : '#991b1b'; rangeCtx.fillRect(box.x, box.y, box.w, box.h);
                 rangeCtx.fillStyle = '#ffffff'; rangeCtx.font = 'bold 11px sans-serif'; rangeCtx.textAlign = 'center'; rangeCtx.fillText(box.label, box.x + box.w/2, box.y + box.h/1.6);
             });
 
+            // 스탯 대시보드
             rangeCtx.fillStyle = '#94a3b8'; rangeCtx.font = 'bold 13px monospace'; rangeCtx.textAlign = 'left';
             rangeCtx.fillText(`[THE RANGE LIVE] HEADSHOT_SCORE: ${rangeScore} | MODE: INFINITE TRAINING`, 45, 55);
 
@@ -367,19 +351,24 @@ def main():
             rangePlayerX = Math.max(100, Math.min(rangeCanvas.width - 100, rangePlayerX + rangePlayerVx));
 
             if (isRangePlaying) {
+                // 상시 스폰 동기화 보장 레이어
+                if (rangeBots.length === 0) spawnRangeBot();
+
                 rangeBots.forEach(b => {
                     b.x += b.vx; if(b.x < 300 || b.x > 860) b.vx *= -1;
-                    rangeCtx.fillStyle = '#334155'; rangeCtx.fillRect(b.x - b.bodyW/2, b.y, b.bodyW, b.bodyH);
+                    rangeCtx.fillStyle = '#334155'; rangeCtx.fillRect(b.x - b.bodyW/2, b.y, b.bodyW, b.bodyH); // 몸통
                     
                     let hGrad = rangeCtx.createRadialGradient(b.x, b.headY, 2, b.x, b.headY, b.headR);
                     hGrad.addColorStop(0, '#ffffff'); hGrad.addColorStop(1, '#ff4655');
-                    rangeCtx.fillStyle = hGrad; rangeCtx.beginPath(); rangeCtx.arc(b.x, b.headY, b.headR, 0, Math.PI*2); rangeCtx.fill();
+                    rangeCtx.fillStyle = hGrad; rangeCtx.beginPath(); rangeCtx.arc(b.x, b.headY, b.headR, 0, Math.PI*2); rangeCtx.fill(); // 머리
                     rangeCtx.strokeStyle = '#ffffff'; rangeCtx.lineWidth = 1; rangeCtx.stroke();
                 });
             }
 
+            // 하단 조작 패드 지시선
             rangeCtx.fillStyle = '#38bdf8'; rangeCtx.fillRect(rangePlayerX - 20, rangeCanvas.height - 15, 40, 5);
 
+            // 무빙 가변 크로스헤어
             let spreadOffset = Math.abs(rangePlayerVx) * 3.5;
             rangeCtx.strokeStyle = Math.abs(rangePlayerVx) <= 0.15 ? '#22c55e' : '#f59e0b'; rangeCtx.lineWidth = 1.8;
             rangeCtx.beginPath(); rangeCtx.moveTo(rMouseX - 5 - spreadOffset, rMouseY); rangeCtx.lineTo(rMouseX - 1 - spreadOffset, rMouseY); rangeCtx.stroke();
