@@ -48,6 +48,15 @@ def main():
                 </div>
                 
                 <div style="background:#111625; padding:12px; border-radius:6px; border:1px solid #1f2942;">
+                    <div style="color:#eab308; font-size:12px; font-weight:bold; margin-bottom:6px;">🏆 GLOBAL LEADERBOARD</div>
+                    <div style="font-size:12px; font-family:monospace; display:flex; flex-direction:column; gap:4px; color:#cbd5e1;" id="leaderboard-box">
+                        <div>1위. TENZ - <span style="color:#eab308;">12,500</span></div>
+                        <div>2위. ASPAS - <span style="color:#94a3b8;">11,200</span></div>
+                        <div>3위. YOU(MY BEST) - <span style="color:#cd7f32;" id="user-best">0</span></div>
+                    </div>
+                </div>
+
+                <div style="background:#111625; padding:12px; border-radius:6px; border:1px solid #1f2942;">
                     <div style="color:#00f2fe; font-size:11px; font-weight:bold; margin-bottom:6px;">📊 난이도 레벨 설정</div>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px;">
                         <button onclick="setDifficulty(1)" id="df-1" style="background:#22c55e; color:black; border:none; padding:6px; font-weight:bold; cursor:pointer; border-radius:4px; font-size:11px;">레벨 1</button>
@@ -56,33 +65,25 @@ def main():
                         <button onclick="setDifficulty(4)" id="df-4" style="background:#07080b; color:#e5e7eb; border:1px solid #374151; padding:6px; font-weight:bold; cursor:pointer; border-radius:4px; font-size:11px;">레벨 4</button>
                     </div>
                 </div>
-
-                <div style="background:#111625; padding:12px; border-radius:6px; border:1px solid #1f2942; height:150px; overflow:hidden;">
-                    <div style="color:#00f2fe; font-size:11px; font-weight:bold; margin-bottom:4px;">💡 모드 가이드</div>
-                    <div style="font-size:11px; color:#9ca3af; line-height:1.5;" id="mode-tip">
-                        <b>GRIDSHOT:</b> 전방의 과녁 3개를 빠르게 제거하는 플릭 훈련장입니다.
-                    </div>
-                </div>
             </div>
         </div>
 
         <div style="display:flex; gap:20px; width:100%;">
             
             <div style="flex: 1; background:#111625; padding:12px; border-radius:8px; border:1px solid #1f2942;">
-                <h4 style="margin:0 0 6px 0; color:#a855f7; font-size:13px; font-weight:900;">STAGE 02 : EASY AIM POP (감도 연동 + 🏆챔스 오디오 사운드)</h4>
+                <h4 style="margin:0 0 6px 0; color:#a855f7; font-size:13px; font-weight:900;">STAGE 02 : EASY AIM POP (🟢RGX 쫀득한 타격음)</h4>
                 <div style="display:flex; gap:10px; font-family:monospace; font-size:12px; font-weight:bold; margin-bottom:8px;">
                     <div style="color:#a855f7;" id="mini-score">SCORE: 0</div>
                     <div style="color:#34d399;" id="mini-combo">COMBO: 0</div>
-                    <div style="color:#9ca3af; font-size:11px; font-weight:normal;">*커서를 올리면 활성화, 클릭 시 챔피언스 2021 사운드 리얼 동기화</div>
                 </div>
                 <canvas id="miniCanvas" width="550" height="200" style="background:#070913; border:2px dashed #a855f7; border-radius:6px; cursor:none; width:100%;"></canvas>
             </div>
 
             <div style="flex: 1; background:#111625; padding:12px; border-radius:8px; border:1px solid #1f2942;">
-                <h4 style="margin:0 0 6px 0; color:#ff4655; font-size:13px; font-weight:900;">STAGE 03 : VALORANT THE RANGE (정지형 봇 고정 모드)</h4>
+                <h4 style="margin:0 0 6px 0; color:#ff4655; font-size:13px; font-weight:900;">STAGE 03 : VALORANT THE RANGE (🎯 5인 봇 무더기 배치 모드)</h4>
                 <div style="display:flex; gap:12px; font-family:monospace; font-size:12px; font-weight:bold; margin-bottom:8px;">
                     <div style="color:#ff4655;" id="range-dashboard">[THE RANGE] HEADSHOTS: 0</div>
-                    <div style="color:#38bdf8; font-size:11px; font-weight:normal;">*봇 무빙 봉인 완료. 오직 브레이킹 정지 100% 정밀 샷 연산</div>
+                    <div style="color:#38bdf8; font-size:11px; font-weight:normal;">*F3 오리지널 구현: 5마리가 동시 배치되며 한 명을 처치하면 즉시 리스폰</div>
                 </div>
                 <canvas id="rangeCanvas" width="550" height="200" style="background:#090c14; border:2px solid #ff4655; border-radius:6px; cursor:none; width:100%;"></canvas>
             </div>
@@ -96,83 +97,67 @@ def main():
         const miniCanvas = document.getElementById('miniCanvas'); const miniCtx = miniCanvas.getContext('2d');
         const rangeCanvas = document.getElementById('rangeCanvas'); const rangeCtx = rangeCanvas.getContext('2d');
 
-        // --- 🎵 [REAL REMAKE] 챔피언스 2021 고유의 프리미엄 헤드샷 메탈릭 오디오 믹싱 구조 ---
+        // --- 🟢 [RGX REMAKE] 쫀득하게 감기는 일렉트로닉 디지털 헤드샷 사운드 아키텍처 ---
         let audioCtx = null;
 
-        function playChampions2021Sound() {
+        function playRGXSound() {
             try {
                 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
 
                 let now = audioCtx.currentTime;
 
-                // 1. 묵직하고 깊은 물리적 헤드 타격 노이즈 레이어 (Heavy Low Blow)
-                let bSize = audioCtx.sampleRate * 0.06;
-                let buffer = audioCtx.createBuffer(1, bSize, audioCtx.sampleRate);
-                let data = buffer.getChannelData(0);
-                for (let i = 0; i < bSize; i++) {
-                    let t = i / audioCtx.sampleRate;
-                    data[i] = (Math.random() * 2 - 1) * Math.exp(-95 * t) * 0.65;
-                }
-                let impactSource = audioCtx.createBufferSource();
-                impactSource.buffer = buffer;
+                // 1. 📢 쫀득하게 에임이 달라붙는 디지털 압착음 (Snappy Digital Click)
+                let osc1 = audioCtx.createOscillator();
+                let osc2 = audioCtx.createOscillator();
+                let clickGain = audioCtx.createGain();
 
-                let impactFilter = audioCtx.createBiquadFilter();
-                impactFilter.type = 'bandpass';
-                impactFilter.frequency.setValueAtTime(240, now); // 21챔스 특유의 먹먹하고 단단한 저음부 타격
-                impactFilter.Q.setValueAtTime(2.5, now);
+                osc1.type = 'triangle';
+                osc2.type = 'square'; // RGX 특유의 각진 기계음을 표출하기 위해 스퀘어 웨이브 조합
 
-                let impactGain = audioCtx.createGain();
-                impactGain.gain.setValueAtTime(0.9, now);
-                impactGain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+                osc1.frequency.setValueAtTime(880, now);
+                osc1.frequency.exponentialRampToValueAtTime(120, now + 0.03); // 짧고 굵게 떨어지는 피치 카피
 
-                impactSource.connect(impactFilter);
-                impactFilter.connect(impactGain);
-                impactGain.connect(audioCtx.destination);
+                osc2.frequency.setValueAtTime(1450, now);
+                osc2.frequency.exponentialRampToValueAtTime(300, now + 0.02);
 
+                clickGain.gain.setValueAtTime(0.7, now);
+                clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.035); // 절대 퐁퐁거리지 않게 0.03초 컷
 
-                // 2. 👑 21 챔피언스의 아이덴티티: 황금빛 서라운드로 맑게 퍼지는 고명 주파수 메탈릭 링잉 (Crystal Metallic Ringing)
-                // 단순 단일 주파수가 아닌 다중 오실레이터 화음 믹스로 원본의 오케스트라 공간감 모사
-                let oscs = [];
-                let freqs = [392.00, 783.99, 1174.66, 1567.98]; // G4, G5, D6, G6 완벽한 챔스 고유 엠비언트 하모니 스케일 배정
-                
-                let ringGain = audioCtx.createGain();
-                ringGain.gain.setValueAtTime(0.3, now);
-                // 잔향이 진하고 부드럽게 뒤로 빠지도록 0.42초간 롱테일 감쇄 연산 (챔스 특유의 쾌감 포인트)
-                ringGain.gain.exponentialRampToValueAtTime(0.0005, now + 0.42);
+                osc1.connect(clickGain);
+                osc2.connect(clickGain);
+                clickGain.connect(audioCtx.destination);
 
-                let ringFilter = audioCtx.createBiquadFilter();
-                ringFilter.type = 'peaking';
-                ringFilter.frequency.setValueAtTime(1200, now);
-                ringFilter.Q.setValueAtTime(1.2, now);
-                ringFilter.gain.setValueAtTime(4, now);
+                // 2. 🔌 RGX 고유의 자성 회로 메탈릭 잔향 레이어 (Magnetic Laser Tail)
+                let tailOsc = audioCtx.createOscillator();
+                let tailGain = audioCtx.createGain();
+                let tailFilter = audioCtx.createBiquadFilter();
 
-                freqs.forEach(f => {
-                    let osc = audioCtx.createOscillator();
-                    osc.type = 'triangle'; // 사인파보다 더 풍부한 배음을 가지는 트라이앵글 웨이브 채택
-                    osc.frequency.setValueAtTime(f, now);
-                    osc.connect(ringFilter);
-                    oscs.push(osc);
-                });
+                tailOsc.type = 'sine';
+                tailOsc.frequency.setValueAtTime(650, now); // RGX 특유의 튜닝 사운드 대역 주파수
 
-                ringFilter.connect(ringGain);
-                ringGain.connect(audioCtx.destination);
+                tailFilter.type = 'bandpass';
+                tailFilter.frequency.setValueAtTime(900, now);
+                tailFilter.Q.setValueAtTime(4.0, now); // 대역을 좁혀서 '키잉-' 하는 미세한 전기 가동음 유도
 
-                // 플레이 백 스타트 동기화
-                impactSource.start(now);
-                oscs.forEach(osc => {
-                    osc.start(now);
-                    osc.stop(now + 0.45);
-                });
+                tailGain.gain.setValueAtTime(0.35, now);
+                tailGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18); // 잔향도 깔끔하고 쫀득하게 마무리
+
+                tailOsc.connect(tailFilter);
+                tailFilter.connect(tailGain);
+                tailGain.connect(audioCtx.destination);
+
+                osc1.start(now); osc2.start(now); tailOsc.start(now);
+                osc1.stop(now + 0.04); osc2.stop(now + 0.04); tailOsc.stop(now + 0.2);
 
             } catch(e) { console.log(e); }
         }
 
         // ========================================================
-        // ⚙️ 전역 물리엔진 변수부 (감도 마우스 가속도 보정 결합)
+        // ⚙️ 전역 변수 관리부
         // ========================================================
         let mode = 'gridshot'; let difficulty = 1; let isPlaying = false; 
-        let score = 0; let timeLeft = 30.0; let totalShots = 0; let hitShots = 0;
+        let score = 0; let timeLeft = 30.0; let totalShots = 0; let hitShots = 0; let userBestScore = 0;
         
         let mouseX = 445, mouseY = 180; 
         let miniMouseX = 275, miniMouseY = 100;
@@ -193,7 +178,8 @@ def main():
 
         let isMiniHovered = false; let miniScore = 0; let miniCombo = 0; let miniTargets = [];
         let isRangePlaying = false; let rangeScore = 0;
-        let rangePlayerX = 275; let rangePlayerVx = 0; let rangeBots = []; 
+        let rangePlayerX = 275; let rangePlayerVx = 0; 
+        let rangeBots = []; // 다중 스폰 봇 배열 구조 변경
         
         const rangeUIBox = [
             { id: 'start', x: 180, y: 15, w: 90, h: 25, label: "🤖 START" },
@@ -240,7 +226,6 @@ def main():
             if (e.key.toLowerCase() === 'a') keys.a = false; if (e.key.toLowerCase() === 'd') keys.d = false;
         });
 
-        // ⚙️ 감도 연동형 전체 마우스 크로스 마이그레이션 바인딩 연산
         canvas.addEventListener('mousemove', (e) => { 
             let rect = canvas.getBoundingClientRect(); 
             let targetX = e.clientX - rect.left; let targetY = e.clientY - rect.top;
@@ -264,7 +249,7 @@ def main():
             for(let i = miniTargets.length - 1; i >= 0; i--) {
                 if (Math.hypot(miniMouseX - miniTargets[i].x, miniMouseY - miniTargets[i].y) <= miniTargets[i].r) {
                     miniScore += 100; miniCombo++; hit = true; 
-                    playChampions2021Sound(); // 🏆 리얼 메탈릭 챔스 오디오 사운드 재생
+                    playRGXSound(); // 🟢 미니게임 RGX 오디오 연동
                     miniTargets.splice(i, 1); break;
                 }
             }
@@ -292,7 +277,7 @@ def main():
                         score = Math.max(0, score - 50); showMovingError = true; errorTimer = 25; return;
                     }
                     hitShots++; score += 100; hitAny = true;
-                    playChampions2021Sound(); targets[i] = generateTargetData(); break;
+                    playRGXSound(); targets[i] = generateTargetData(); break;
                 }
             }
             if (!hitAny) score = Math.max(0, score - 20); updateDashboard();
@@ -302,8 +287,8 @@ def main():
             for(let i=0; i<rangeUIBox.length; i++) {
                 let box = rangeUIBox[i];
                 if (rMouseX >= box.x && rMouseX <= box.x + box.w && rMouseY >= box.y && rMouseY <= box.y + box.h) {
-                    playChampions2021Sound();
-                    if (box.id === 'start' && !isRangePlaying) { isRangePlaying = true; rangeScore = 0; spawnRangeBot(); }
+                    playRGXSound();
+                    if (box.id === 'start' && !isRangePlaying) { isRangePlaying = true; rangeScore = 0; initRangeBots(); }
                     if (box.id === 'clear') { isRangePlaying = false; rangeBots = []; }
                     return;
                 }
@@ -319,8 +304,9 @@ def main():
                 let b = rangeBots[i];
                 if (Math.hypot(finalMouseX - b.x, finalMouseY - b.headY) <= b.headR) {
                     rangeScore++; hit = true; 
-                    playChampions2021Sound(); // 🏆 발로란트 무제한 연습장 챔스 사운드 리빌드 적용
-                    rangeBots.splice(i, 1); spawnRangeBot(); break;
+                    playRGXSound(); // 🟢 쫀득한 RGX 헤드샷 사운드 출력
+                    // 원본 발로란트 무제한 연습장 동기화: 잡은 로봇은 무작위 새로운 축으로 리스폰
+                    rangeBots[i] = createSingleBot(); break;
                 }
             }
             document.getElementById('range-dashboard').innerText = `[THE RANGE] HEADSHOTS: ${rangeScore}`;
@@ -336,23 +322,31 @@ def main():
             return { x: 120 + Math.random() * 650, y: 80 + Math.random() * 200, radius: baseRadius, vx: 0, vy: 0 };
         }
 
-        function spawnRangeBot() {
-            // ★ 발로란트 정지형 과녁 샌드백 로봇 배치 고정
-            rangeBots = [{
-                x: 160 + Math.random() * 230,
+        // ★ 발로란트 무더기(5마리) 배치 시스템 빌더
+        function initRangeBots() {
+            rangeBots = [];
+            for (let i = 0; i < 5; i++) { rangeBots.push(createSingleBot()); }
+        }
+        function createSingleBot() {
+            return {
+                x: 110 + Math.random() * 330,
                 y: 105,
-                bodyW: 16, bodyH: 34,
-                headY: 88, headR: 6.5,
-                vx: 0 // 움직임 0 고정
-            }];
+                bodyW: 15, bodyH: 34,
+                headY: 88, headR: 6.2,
+                vx: 0
+            };
         }
 
         function startSession() { isPlaying = true; score = 0; timeLeft = 30.0; totalShots = 0; hitShots = 0; initTargets(); document.getElementById('start-btn').innerText = "⏱ 진행중"; document.getElementById('quit-btn').style.display = "inline-block"; }
-        function quitSession() { isPlaying = false; document.getElementById('start-btn').innerText = "▶ 훈련 시작"; document.getElementById('quit-btn').style.display = "none"; updateDashboard(); }
+        function quitSession() { 
+            isPlaying = false; 
+            if(score > userBestScore) { userBestScore = score; document.getElementById('user-best').innerText = userBestScore.toLocaleString(); }
+            document.getElementById('start-btn').innerText = "▶ 훈련 시작"; document.getElementById('quit-btn').style.display = "none"; updateDashboard(); 
+        }
         function updateDashboard() { document.getElementById('ui-score').innerText = "SCORE: " + score; document.getElementById('ui-acc').innerText = "ACC: " + (totalShots>0?Math.round((hitShots/totalShots)*100):100) + "%"; document.getElementById('ui-time').innerText = "TIME: " + timeLeft.toFixed(1) + "s"; }
 
         // ========================================================
-        // 🔄 통합 렌더 프레임 루프
+        // 🔄 통합 프레임 루프 엔진
         // ========================================================
         function loop() {
             // STAGE 01: 메인 에임랩 루프
@@ -365,7 +359,7 @@ def main():
                 if (mode === 'tracking') {
                     let t = targets[0]; t.angle += 0.03 * t.speed; t.x += Math.cos(t.angle) * t.speed; t.y += Math.sin(t.angle) * (t.speed * 0.5);
                     if(t.x < 50 || t.x > canvas.width - 50) t.angle = Math.PI - t.angle; if(t.y < 50 || t.y > canvas.height - 100) t.angle = -t.angle;
-                    if (isMouseDown && Math.hypot(mouseX - t.x, mouseY - t.y) <= t.radius) { score += 3; updateDashboard(); if(Math.random()<0.08) playChampions2021Sound(); }
+                    if (isMouseDown && Math.hypot(mouseX - t.x, mouseY - t.y) <= t.radius) { score += 3; updateDashboard(); if(Math.random()<0.08) playRGXSound(); }
                     ctx.fillStyle = 'rgba(0, 242, 254, 0.15)'; ctx.beginPath(); ctx.arc(t.x, t.y, t.radius, 0, Math.PI*2); ctx.fill();
                     ctx.strokeStyle = '#00f2fe'; ctx.lineWidth = 2.5; ctx.stroke();
                 } else if (mode === 'microflex') {
@@ -390,12 +384,11 @@ def main():
                     miniCtx.fillStyle = 'rgba(168, 85, 247, 0.2)'; miniCtx.beginPath(); miniCtx.arc(mt.x, mt.y, mt.r, 0, Math.PI*2); miniCtx.fill();
                     miniCtx.strokeStyle = '#a855f7'; miniCtx.lineWidth = 1.5; miniCtx.stroke();
                 }
-                // 감도 동기화 크로스헤어 렌더
-                miniCtx.fillStyle = '#a855f7'; miniCtx.beginPath(); miniCtx.arc(miniMouseX, miniMouseY, 3, 0, Math.PI*2); miniCtx.fill();
+                miniCtx.fillStyle = '#22c55e'; miniCtx.beginPath(); miniCtx.arc(miniMouseX, miniMouseY, 3, 0, Math.PI*2); miniCtx.fill();
             } else { miniCtx.fillStyle = '#4b5563'; miniCtx.font = '11px sans-serif'; miniCtx.textAlign = 'center'; miniCtx.fillText("이곳에 커서를 가져오면 손풀기 타겟이 개방됩니다.", miniCanvas.width/2, miniCanvas.height/2); }
 
 
-            // STAGE 03: 발로란트 고정형 사격장 루프
+            // STAGE 03: 발로란트 무더기 스폰 사격장 루프
             rangeCtx.fillStyle = '#090c14'; rangeCtx.fillRect(0, 0, rangeCanvas.width, rangeCanvas.height);
             rangeCtx.fillStyle = '#1e293b'; rangeCtx.fillRect(80, 140, 390, 3); 
             
@@ -408,12 +401,12 @@ def main():
             rangePlayerX = Math.max(50, Math.min(rangeCanvas.width - 50, rangePlayerX + rangePlayerVx));
 
             if (isRangePlaying) {
-                if (rangeBots.length === 0) spawnRangeBot();
+                if (rangeBots.length === 0) initRangeBots();
                 rangeBots.forEach(b => {
                     rangeCtx.fillStyle = '#475569'; rangeCtx.fillRect(b.x - b.bodyW/2, b.y, b.bodyW, b.bodyH);
                     
                     let hGrad = rangeCtx.createRadialGradient(b.x, b.headY, 1, b.x, b.headY, b.headR);
-                    hGrad.addColorStop(0, '#ffffff'); hGrad.addColorStop(1, '#ff4655');
+                    hGrad.addColorStop(0, '#ffffff'); hGrad.addColorStop(1, '#00ffcc'); // 🟢 RGX 네온 테마에 맞춰 머리 코어 색상 변경
                     rangeCtx.fillStyle = hGrad; rangeCtx.beginPath(); rangeCtx.arc(b.x, b.headY, b.headR, 0, Math.PI*2); rangeCtx.fill();
                     rangeCtx.strokeStyle = '#ffffff'; rangeCtx.lineWidth = 1; rangeCtx.stroke();
                 });
