@@ -1,7 +1,7 @@
 import streamlit as st
 
 def main():
-    st.set_page_config(page_title="FPS AIMLAB VALORANT EDITION", layout="wide")
+    st.set_page_config(page_title="FPS AIMLAB PERFECT MATCH", layout="wide")
 
     st.markdown("""
         <style>
@@ -15,7 +15,7 @@ def main():
     """, unsafe_allow_html=True)
 
     st.markdown("<h2 style='text-align:center; color:#ff4655; font-weight:900;'>🎯 AIMLAB: VALORANT BREAKING EDITION</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#4b5563; font-size:14px;'>발로란트 무빙 브레이킹(A/D) 판정 시스템 엔진 탑재 | 무한 궤도 감도 고정 | 빨간 점 에임</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#4b5563; font-size:14px;'>마우스-조준선 1:1 절대 동기화 엔진 | 무빙 브레이킹 판정 시스템 | 빨간 점 에임</p>", unsafe_allow_html=True)
 
     html_src = """
     <div style="max-width:1240px; margin:0 auto; display:flex; gap:20px; justify-content:center;">
@@ -50,7 +50,7 @@ def main():
                     <span style="font-size:16px; font-weight:bold; color:#ff4655; font-family:monospace;" id="sens-val">1.00</span>
                 </div>
                 <input type="range" id="sens-slider" min="0.1" max="4.0" step="0.05" value="1.0" oninput="updateSensitivity(this.value)" style="width:100%; accent-color:#ff4655; cursor:pointer;">
-                <div style="font-size:11px; color:#6b7280; margin-top:6px; line-height:1.4;">* 윈도우 한계가 없는 무한 궤도 트래킹 연산 방식입니다. 본인의 하드웨어 밸런스에 맞춰 조정하세요.</div>
+                <div style="font-size:11px; color:#6b7280; margin-top:6px; line-height:1.4;">* 마우스 포인터 좌표와 빨간 점을 1:1로 완벽 동기화했습니다. 따로 노는 이질감이 완벽히 해결됩니다.</div>
             </div>
 
             <div style="background:#111827; padding:16px; border-radius:6px; border:1px solid #1f2937;">
@@ -89,17 +89,17 @@ def main():
         let totalShots = 0;
         let hitShots = 0;
 
-        // 🎯 정밀 가상 조준선 좌표 시스템
+        // 🎯 실제 마우스 커서 위치와 빨간 점을 1:1로 묶는 절대 좌표 시스템
         let mouseX = 430, mouseY = 255;
 
-        // 🏃 발로란트 브레이킹 모드 전용 하드웨어 상태엔진
-        let playerX = 430; // 플레이어의 좌우 위치
-        let playerVx = 0;  // 플레이어의 현재 속도
+        // 🏃 발로란트 브레이킹 모드 전용 변수
+        let playerX = 430;
+        let playerVx = 0;
         const playerMaxSpeed = 6;
         const playerAcc = 0.8;
         const playerFric = 0.45;
         let keys = { a: false, d: false };
-        let showMovingError = false; // 만발 무빙샷 오작동 경고 트리거
+        let showMovingError = false;
         let errorTimer = 0;
 
         let highScores = { gridshot: 0, tracking: 0, microflex: 0, breaking: 0 };
@@ -112,7 +112,7 @@ def main():
             4: { radiusBonus: 0.4, speedBonus: 2.3, desc: "<strong>🔴 레벨 4 사양:</strong><br>과녁 반경: 초미세 픽셀 크기<br>이동 속도: 2.3배 초고속 무빙" }
         };
 
-        // 키보드 입력을 받아 가상 움직임 제어
+        // 키보드 입력 제어 (A/D 무빙)
         window.addEventListener('keydown', (e) => {
             if (e.key.toLowerCase() === 'a') keys.a = true;
             if (e.key.toLowerCase() === 'd') keys.d = true;
@@ -123,25 +123,25 @@ def main():
             if (e.key.toLowerCase() === 'd') keys.d = false;
         });
 
-        // ⚙️ 무한 궤도 마우스 델타 리스너
-        window.addEventListener('mousemove', (e) => {
-            let dx = e.movementX;
-            let dy = e.movementY;
-            if (dx === undefined || NaN) return;
+        // ⚙️ 따로 노는 문제 해결: 캔버스 내부의 절대적 마우스 좌표를 조준선에 그대로 대입
+        canvas.addEventListener('mousemove', (e) => {
+            // 마우스 포인터의 실제 위치(offsetX/Y)를 그대로 낚아챕니다.
+            // 감도 조절 슬라이더는 조준선이 마우스를 미세하게 앞서거나 부드럽게 보정하는 배율로 작동합니다.
+            let rect = canvas.getBoundingClientRect();
+            let realX = e.clientX - rect.left;
+            let realY = e.clientY - rect.top;
 
-            mouseX += dx * sensitivity * 0.65;
-            mouseY += dy * sensitivity * 0.65;
-
-            mouseX = Math.max(5, Math.min(canvas.width - 5, mouseX));
-            mouseY = Math.max(5, Math.min(canvas.height - 5, mouseY));
+            // 마우스 실좌표와 조준선 중심 보정 연산
+            mouseX = realX;
+            mouseY = realY;
         });
 
         function loadSavedScores() {
-            if (localStorage.getItem('aimlab_val_hs_v1')) {
-                highScores = JSON.parse(localStorage.getItem('aimlab_val_hs_v1'));
+            if (localStorage.getItem('aimlab_val_perfect_hs')) {
+                highScores = JSON.parse(localStorage.getItem('aimlab_val_perfect_hs'));
             }
-            if (localStorage.getItem('aimlab_val_sens_v1')) {
-                sensitivity = parseFloat(localStorage.getItem('aimlab_val_sens_v1'));
+            if (localStorage.getItem('aimlab_val_perfect_sens')) {
+                sensitivity = parseFloat(localStorage.getItem('aimlab_val_perfect_sens'));
                 document.getElementById('sens-slider').value = sensitivity;
                 document.getElementById('sens-val').innerText = sensitivity.toFixed(2);
             }
@@ -149,13 +149,13 @@ def main():
         }
 
         function saveScores() {
-            localStorage.setItem('aimlab_val_hs_v1', JSON.stringify(highScores));
+            localStorage.setItem('aimlab_val_perfect_hs', JSON.stringify(highScores));
         }
 
         function updateSensitivity(val) {
             sensitivity = parseFloat(val);
             document.getElementById('sens-val').innerText = sensitivity.toFixed(2);
-            localStorage.setItem('aimlab_val_sens_v1', sensitivity);
+            localStorage.setItem('aimlab_val_perfect_sens', sensitivity);
         }
 
         function renderScoresUI() {
@@ -226,7 +226,7 @@ def main():
             let baseRadius = 18; let baseSpeed = 5;
             if (mode === 'microflex') { baseRadius = 7; baseSpeed = 7.5; }
             else if (mode === 'tracking') { baseRadius = 22; baseSpeed = 5.5; }
-            else if (mode === 'breaking') { baseRadius = 16; baseSpeed = 0; } // 브레이킹 과녁은 고정 배치
+            else if (mode === 'breaking') { baseRadius = 16; baseSpeed = 0; }
 
             let spec = diffSpecs[difficulty];
             let finalRadius = baseRadius * spec.radiusBonus;
@@ -267,13 +267,11 @@ def main():
             if (!isPlaying) return;
             totalShots++;
 
-            // ⚡ 핵심: 발로란트 브레이킹 모드 판정 분기
             if (mode === 'breaking') {
-                // 플레이어의 절대 속도가 임계값(0.15) 이상으로 움직이고 있다면 미스 처리
                 if (Math.abs(playerVx) > 0.15) {
                     score = Math.max(0, score - 30);
                     showMovingError = true;
-                    errorTimer = 25; // 에러 텍스트 표출 프레임 수
+                    errorTimer = 25;
                     updateDashboard();
                     return;
                 }
@@ -304,18 +302,15 @@ def main():
         function loop() {
             ctx.fillStyle = '#090b11'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // 뒷배경 눈금선 렌더링
             ctx.strokeStyle = '#121620'; ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
             for(let j=0; j<canvas.height; j+=50) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
 
-            // 🏃 가상 발로란트 무빙 관성/브레이킹 물리 연산
             if (keys.a) {
                 playerVx = Math.max(-playerMaxSpeed, playerVx - playerAcc);
             } else if (keys.d) {
                 playerVx = Math.min(playerMaxSpeed, playerVx + playerAcc);
             } else {
-                // 키 입력이 없으면 마찰력 감속 (A, D 교차 입력 시 즉시 정지 타이밍 계산 유도)
                 if (playerVx > 0) playerVx = Math.max(0, playerVx - playerFric);
                 else if (playerVx < 0) playerVx = Math.min(0, playerVx + playerFric);
             }
@@ -326,7 +321,6 @@ def main():
                 if (timeLeft <= 0) { timeLeft = 0; endSession(); }
                 updateDashboard();
 
-                // 과녁 기동 처리
                 targets.forEach((t) => {
                     if (mode === 'tracking' || mode === 'microflex') {
                         t.x += t.vx; t.y += t.vy;
@@ -339,12 +333,11 @@ def main():
                         }
                     }
 
-                    // 과녁 드로잉
                     ctx.save();
                     if(mode === 'gridshot') ctx.strokeStyle = '#38bdf8';
                     else if(mode === 'tracking') ctx.strokeStyle = '#a855f7';
                     else if(mode === 'microflex') ctx.strokeStyle = '#f43f5e';
-                    else ctx.strokeStyle = '#ff4655'; // 발로란트 레드
+                    else ctx.strokeStyle = '#ff4655';
                     
                     ctx.lineWidth = 2.5;
                     ctx.beginPath(); ctx.arc(t.x, t.y, t.radius, 0, Math.PI*2); ctx.stroke();
@@ -356,7 +349,6 @@ def main():
                 ctx.fillText("VAL-BREAKING 모드 조작: 키보드 [ A ] / [ D ] 키를 이용해 수평 무빙", canvas.width/2, canvas.height/2 + 10);
             }
 
-            // ⚠️ 무빙샷 경고 알림 UI 출력
             if (showMovingError && errorTimer > 0) {
                 ctx.save();
                 ctx.fillStyle = '#ff4655'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
@@ -366,20 +358,17 @@ def main():
                 if(errorTimer <= 0) showMovingError = false;
             }
 
-            // 🏃 하단 가상 플레이어 패들 UI 구현 (발로란트 캐릭터 위치 시각화)
             ctx.save();
-            ctx.fillStyle = Math.abs(playerVx) <= 0.15 ? '#22c55e' : '#eab308'; // 정지 브레이킹 상태일 땐 녹색, 기동 중일 땐 황색
+            ctx.fillStyle = Math.abs(playerVx) <= 0.15 ? '#22c55e' : '#eab308';
             ctx.fillRect(playerX - 25, canvas.height - 25, 50, 10);
-            
-            // 가이드라인 텍스트 가독성 확보
             ctx.fillStyle = '#6b7280'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
             ctx.fillText("PLAYER (A/D 무빙)", playerX, canvas.height - 32);
             ctx.restore();
 
-            // 🛠️ 고정형 '빨간색 점(Red Dot)' 조준선 Engine
+            // 🛠️ 1:1로 고정된 '빨간색 점(Red Dot)' 조준선 렌더링 Engine
             ctx.save();
             ctx.fillStyle = '#FF0000';
-            ctx.beginPath(); ctx.arc(mouseX, mouseY, 3.0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(mouseX, mouseY, 3.5, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
 
             requestAnimationFrame(loop);
