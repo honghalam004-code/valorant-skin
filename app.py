@@ -1,7 +1,7 @@
 import streamlit as st
 
 def main():
-    st.set_page_config(page_title="AIMLAB: DODGE & DESTROY ENGINE", layout="wide")
+    st.set_page_config(page_title="AIMLAB: FINAL BALANCED EDITION", layout="wide")
 
     st.markdown("""
         <style>
@@ -14,8 +14,8 @@ def main():
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<h2 style='text-align:center; color:#ff4655; font-weight:900;'>🎯 AIMLAB: DODGE & BREAKING ENGINE</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#4b5563; font-size:14px;'>오타 수정 완료 | 타겟 투사체 레이드 모드 | 날아오는 미사일을 피하며 순간 브레이킹 격파</p>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:#ff4655; font-weight:900;'>🎯 AIMLAB: FINAL BALANCED EDITION</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#4b5563; font-size:14px;'>마이크로플렉스 Lvl 4 난이도 완화 완료 | 리더보드 VAL-BREAKING 기록 연동 시스템</p>", unsafe_allow_html=True)
 
     html_src = """
     <div style="max-width:1240px; margin:0 auto; display:flex; gap:20px; justify-content:center;">
@@ -54,7 +54,7 @@ def main():
                     <span style="font-size:16px; font-weight:bold; color:#ff4655; font-family:monospace;" id="sens-val">1.00</span>
                 </div>
                 <input type="range" id="sens-slider" min="0.1" max="4.0" step="0.05" value="1.0" oninput="updateSensitivity(this.value)" style="width:100%; accent-color:#ff4655; cursor:pointer;">
-                <div style="font-size:11px; color:#6b7280; margin-top:6px; line-height:1.4;">* VAL-BREAKING 모드 작동 방식: 타겟이 쏘는 발사체를 피하면서 멈춰 서서(브레이킹) 과녁을 맞춰야 점수가 오릅니다.</div>
+                <div style="font-size:11px; color:#6b7280; margin-top:6px; line-height:1.4;">* [P] 키나 일시정지 버튼을 누르면 훈련이 멈추고 윈도우 마우스 커서가 복구되어 브라우저 외부로 나갈 수 있습니다.</div>
             </div>
 
             <div style="background:#111827; padding:16px; border-radius:6px; border:1px solid #1f2937;">
@@ -66,7 +66,7 @@ def main():
                     <button onclick="setDifficulty(4)" id="df-4" style="background:#07080b; color:#e5e7eb; border:1px solid #374151; padding:10px; font-weight:bold; cursor:pointer; border-radius:4px; font-size:13px;">레벨 4</button>
                 </div>
                 <div style="margin-top:12px; font-size:12px; color:#9ca3af; line-height:1.5; background:#07080b; padding:10px; border-radius:4px;" id="df-desc">
-                    <strong>🟢 레벨 1 사양:</strong><br>과녁 반경: 기본 1.4배 대폭 확대<br>이동 속도: 0.4배 편안한 감속
+                    <strong>🟢 레벨 1 사양:</strong><br>과녁 반경: 1.4배 상향<br>투사체 속도: 느림
                 </div>
             </div>
 
@@ -83,8 +83,7 @@ def main():
         const canvas = document.getElementById('aimCanvas');
         const ctx = canvas.getContext('2d');
 
-        // 메인 설정 변수
-        let mode = 'breaking'; // 변경 제안 주신 브레이킹 모드를 기본으로 장착
+        let mode = 'breaking'; 
         let difficulty = 1;
         let sensitivity = 1.0;
         let isPlaying = false;
@@ -94,12 +93,10 @@ def main():
         let totalShots = 0;
         let hitShots = 0;
 
-        // 마우스 절대 좌표
         let mouseX = 430, mouseY = 255;
         let rawMouseX = 430, rawMouseY = 255;
         let isMouseDown = false;
 
-        // 플레이어 무빙 물리 데이터
         let playerX = 430;
         let playerVx = 0;
         const playerMaxSpeed = 6.0;
@@ -109,20 +106,21 @@ def main():
         let showMovingError = false;
         let errorTimer = 0;
 
-        // 🔥 실전 투사체(적의 발사체) 관리 배열 및 슛 타이머
         let projectiles = [];
         let enemyShootTimer = 0;
         let showHitEffect = false;
         let hitEffectTimer = 0;
 
+        // 리더보드 내부 데이터 구조 정의
         let highScores = { gridshot: 0, tracking: 0, microflex: 0, breaking: 0 };
         let targets = [];
 
+        // 🔥 마이크로플렉스 레벨 4의 '극악 난이도 과녁 크기'를 0.35에서 0.75로 전격 상향 조정!
         const diffSpecs = {
             1: { radiusBonus: 1.4, speedBonus: 0.4, projectileSpeed: 2.5, desc: "<strong>🟢 레벨 1 사양:</strong><br>과녁 반경: 1.4배 상향<br>투사체 속도: 느림" },
             2: { radiusBonus: 1.1, speedBonus: 0.9, projectileSpeed: 4.0, desc: "<strong>🟡 레벨 2 사양:</strong><br>과녁 반경: 실전 입문 규격<br>투사체 속도: 보통" },
-            3: { radiusBonus: 0.7, speedBonus: 1.5, projectileSpeed: 5.5, desc: "<strong>🟠 레벨 3 사양:</strong><br>과녁 반경: 하드코어 30% 압축<br>투사체 속도: 빠름" },
-            4: { radiusBonus: 0.35, speedBonus: 2.3, projectileSpeed: 7.5, desc: "<strong>🔴 레벨 4 사양:</strong><br>과녁 반경: 초미세 픽셀 크기 (극악 사양)" }
+            3: { radiusBonus: 0.9, speedBonus: 1.4, projectileSpeed: 5.5, desc: "<strong>🟠 레벨 3 사양:</strong><br>과녁 반경: 10% 축소 정밀전<br>투사체 속도: 빠름" },
+            4: { radiusBonus: 0.75, speedBonus: 1.9, projectileSpeed: 7.0, desc: "<strong>🔴 레벨 4 사양 (밸런스 패치):</strong><br>과녁 반경: 현실적인 마이크로 타겟팅 (0.75배)<br>투사체 속도: 극속 대응 훈련" }
         };
 
         window.addEventListener('keydown', (e) => {
@@ -152,49 +150,51 @@ def main():
             const pauseBtn = document.getElementById('pause-btn');
             if (isPaused) {
                 pauseBtn.innerText = "▶ 재개"; pauseBtn.style.background = "#34d399";
-                canvas.style.cursor = "default"; // 다른 작업용 커서 해제
+                canvas.style.cursor = "default";
             } else {
                 pauseBtn.innerText = "⏸ 일시정지"; pauseBtn.style.background = "#eab308";
                 canvas.style.cursor = "none";
             }
         }
 
+        // 로컬스토리지 영구 스코어 로더 및 동기화
         function loadSavedScores() {
-            if (localStorage.getItem('aimlab_v6_hs')) {
-                highScores = JSON.parse(localStorage.getItem('aimlab_v6_hs'));
+            if (localStorage.getItem('aimlab_v7_hs')) {
+                highScores = JSON.parse(localStorage.getItem('aimlab_v7_hs'));
             }
-            if (localStorage.getItem('aimlab_v6_sens')) {
-                sensitivity = parseFloat(localStorage.getItem('aimlab_v6_sens'));
+            if (localStorage.getItem('aimlab_v7_sens')) {
+                sensitivity = parseFloat(localStorage.getItem('aimlab_v7_sens'));
                 document.getElementById('sens-slider').value = sensitivity;
                 document.getElementById('sens-val').innerText = sensitivity.toFixed(2);
             }
             renderScoresUI();
         }
 
-        function saveScores() { localStorage.setItem('aimlab_v6_hs', JSON.stringify(highScores)); }
+        function saveScores() { localStorage.setItem('aimlab_v7_hs', JSON.stringify(highScores)); }
 
         function updateSensitivity(val) {
             sensitivity = parseFloat(val);
             document.getElementById('sens-val').innerText = sensitivity.toFixed(2);
-            localStorage.setItem('aimlab_v6_sens', sensitivity);
+            localStorage.setItem('aimlab_v7_sens', sensitivity);
         }
 
+        // 🏆 우측 UI 패널에 VAL-BREAKING 스코어를 가시화하는 렌더러 함수
         function renderScoresUI() {
             document.getElementById('record-board').innerHTML = `
                 <div style="display:flex; justify-content:space-between; color:#6b7280; border-bottom:1px solid #1f2937; padding-bottom:4px;">
                     <span>MODE</span><span>PERSONAL BEST</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; margin-top:4px;">
-                    <span>🎯 GRIDSHOT</span><span style="color:#38bdf8; font-weight:bold;">${highScores.gridshot}</span>
+                    <span>🎯 GRIDSHOT</span><span style="color:#38bdf8; font-weight:bold;">${highScores.gridshot || 0}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between;">
-                    <span>🔄 TRACKING</span><span style="color:#00f2fe; font-weight:bold;">${highScores.tracking}</span>
+                    <span>🔄 TRACKING</span><span style="color:#00f2fe; font-weight:bold;">${highScores.tracking || 0}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between;">
-                    <span>⚡ MICROFLEX</span><span style="color:#f43f5e; font-weight:bold;">${highScores.microflex}</span>
+                    <span>⚡ MICROFLEX</span><span style="color:#f43f5e; font-weight:bold;">${highScores.microflex || 0}</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; border-top:1px dashed #374151; pt:4px; margin-top:4px;">
-                    <span>⚡ BREAKING</span><span style="color:#ff4655; font-weight:bold;">${highScores.breaking}</span>
+                <div style="display:flex; justify-content:space-between; border-top:1px dashed #ff4655; padding-top:6px; margin-top:4px;">
+                    <span>💥 VAL-BREAKING</span><span style="color:#ff4655; font-weight:bold;">${highScores.breaking || 0}</span>
                 </div>
             `;
         }
@@ -218,7 +218,6 @@ def main():
         }
 
         function changeMode(m) {
-            if (isPlaying) return;
             mode = m;
             ['grid', 'track', 'micro', 'break'].forEach(k => {
                 const el = document.getElementById('m-' + k);
@@ -234,7 +233,17 @@ def main():
                     el.style.border = '1px solid currentColor';
                 }
             });
+
+            if (isPlaying) {
+                // 실시간 스위칭 시 기존 점수를 저장하지 않고 깔끔하게 하드 리셋
+                score = 0; timeLeft = 30.0; totalShots = 0; hitShots = 0;
+                playerX = 430; playerVx = 0; enemyShootTimer = 0; projectiles = [];
+                isPaused = false; canvas.style.cursor = "none";
+                const pauseBtn = document.getElementById('pause-btn');
+                pauseBtn.innerText = "⏸ 일시정지"; pauseBtn.style.background = "#eab308";
+            }
             initTargets();
+            updateDashboard();
         }
 
         function initTargets() {
@@ -247,7 +256,7 @@ def main():
             let baseRadius = 18; let baseSpeed = 4.0;
             if (mode === 'microflex') { baseRadius = 16; baseSpeed = 3.5; } 
             else if (mode === 'tracking') { baseRadius = 24; baseSpeed = 0; } 
-            else if (mode === 'breaking') { baseRadius = 18; baseSpeed = 0; } // 브레이킹 모드 타겟은 제자리 고정 사양
+            else if (mode === 'breaking') { baseRadius = 18; baseSpeed = 0; } 
 
             let spec = diffSpecs[difficulty];
             return {
@@ -278,7 +287,12 @@ def main():
             document.getElementById('start-btn').innerText = "▶ 훈련 시작";
             document.getElementById('pause-btn').style.display = "none";
 
-            if (score > highScores[mode]) { highScores[mode] = score; saveScores(); renderScoresUI(); }
+            // 🔥 VAL-BREAKING 스코어가 정상적으로 하이스코어 객체에 판정/기록되도록 업데이트
+            if (score > (highScores[mode] || 0)) { 
+                highScores[mode] = score; 
+                saveScores(); 
+                renderScoresUI(); 
+            }
         }
 
         canvas.addEventListener('mousedown', () => {
@@ -290,7 +304,6 @@ def main():
             for (let i = 0; i < targets.length; i++) {
                 let dist = Math.hypot(mouseX - targets[i].x, mouseY - targets[i].y);
                 if (dist <= targets[i].radius) {
-                    // 무빙샷 검증 페널티 엔진 활성화
                     if (mode === 'breaking' && Math.abs(playerVx) > 0.2) {
                         score = Math.max(0, score - 40);
                         showMovingError = true; errorTimer = 25;
@@ -315,7 +328,6 @@ def main():
         function loop() {
             if (isPlaying && isPaused) { requestAnimationFrame(loop); return; }
 
-            // 피격 이펙트 빨간 플래시 캔버스 컬러 연산
             if (showHitEffect && hitEffectTimer > 0) {
                 ctx.fillStyle = '#260a0f'; hitEffectTimer--;
                 if(hitEffectTimer <= 0) showHitEffect = false;
@@ -328,7 +340,6 @@ def main():
             for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
             for(let j=0; j<canvas.height; j+=50) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
 
-            // 플레이어 무빙 물리 가속도 공식
             if (keys.a) playerVx = Math.max(-playerMaxSpeed, playerVx - playerAcc);
             else if (keys.d) playerVx = Math.min(playerMaxSpeed, playerVx + playerAcc);
             else {
@@ -337,7 +348,6 @@ def main():
             }
             playerX = Math.max(40, Math.min(canvas.width - 40, playerX + playerVx));
 
-            // 실전 탄퍼짐
             let spreadX = 0, spreadY = 0;
             if (mode === 'breaking' && Math.abs(playerVx) > 0.2) {
                 spreadX = (Math.random() - 0.5) * (Math.abs(playerVx) * 12);
@@ -350,13 +360,11 @@ def main():
                 if (timeLeft <= 0) { timeLeft = 0; endSession(); }
                 updateDashboard();
 
-                // 🔥 VAL-BREAKING 전용: 타겟의 플레이어 저격 투사체 생성 AI 엔진
                 if (mode === 'breaking') {
                     enemyShootTimer++;
-                    let shootInterval = difficulty === 1 ? 75 : (difficulty === 2 ? 55 : 35);
+                    let shootInterval = difficulty === 1 ? 75 : (difficulty === 2 ? 55 : (difficulty === 3 ? 38 : 26));
                     if (enemyShootTimer >= shootInterval && targets.length > 0) {
                         enemyShootTimer = 0;
-                        // 과녁의 위치에서 플레이어의 현재 수평 좌표를 겨냥해 아래로 떨어지는 미사일 벡터 생성
                         let t = targets[0];
                         let dx = playerX - t.x;
                         let dy = (canvas.height - 20) - t.y;
@@ -371,25 +379,20 @@ def main():
                     }
                 }
 
-                // 투사체 이동 및 캐릭터 피격 레이캐스팅 판정 연산
                 for (let i = projectiles.length - 1; i >= 0; i--) {
                     let p = projectiles[i];
                     p.x += p.vx; p.y += p.vy;
 
-                    // 하단 플레이어 상자(수평 위치 playerX - 25 ~ +25, 높이 height-25 ~ height-15) 충돌 체크
                     if (p.y >= canvas.height - 25 && p.y <= canvas.height - 10) {
                         if (p.x >= playerX - 30 && p.x <= playerX + 30) {
-                            // 피격 대미지 발생 (감점 페널티)
                             score = Math.max(0, score - 50);
                             showHitEffect = true; hitEffectTimer = 10;
                             projectiles.splice(i, 1); updateDashboard(); continue;
                         }
                     }
 
-                    // 화면 밖으로 나간 투사체 자동 삭제 소멸자
                     if (p.y > canvas.height || p.x < 0 || p.x > canvas.width) { projectiles.splice(i, 1); continue; }
 
-                    // 투사체 그래픽 그리기
                     ctx.save(); ctx.fillStyle = '#f59e0b'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 8;
                     ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill(); ctx.restore();
                 }
@@ -404,12 +407,11 @@ def main():
                         if (dist <= t.radius && isMouseDown) score += 2;
                     }
 
-                    // 과녁 드로잉
                     ctx.save();
                     if(mode === 'gridshot') ctx.strokeStyle = '#38bdf8';
                     else if(mode === 'tracking') ctx.strokeStyle = '#00f2fe';
                     else if(mode === 'microflex') ctx.strokeStyle = '#f43f5e';
-                    else { ctx.strokeStyle = '#ff4655'; ctx.shadowColor = '#ff4655'; ctx.shadowBlur = 6; } // 보스 과녁 강조 이펙트
+                    else { ctx.strokeStyle = '#ff4655'; ctx.shadowColor = '#ff4655'; ctx.shadowBlur = 6; }
                     
                     ctx.lineWidth = 2.5;
                     ctx.beginPath(); ctx.arc(t.x, t.y, t.radius, 0, Math.PI*2); ctx.stroke();
@@ -417,8 +419,8 @@ def main():
                 });
             } else {
                 ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText("세팅 완료 후 상단 [▶ 훈련 시작]을 클릭하세요.", canvas.width/2, canvas.height/2 - 20);
-                ctx.fillText("VAL-BREAKING 모드 조작: [ A / D ] 키로 미사일을 피하면서 정지 상태(녹색)로 타겟 점사!", canvas.width/2, canvas.height/2 + 10);
+                ctx.fillText("원하는 설정을 마치고 상단 [▶ 훈련 시작]을 클릭하세요.", canvas.width/2, canvas.height/2 - 20);
+                ctx.fillText("실시간 모드 변경 완벽 지원 | 모든 최고 기록은 리더보드에 자동 업데이트됩니다.", canvas.width/2, canvas.height/2 + 10);
             }
 
             if (showMovingError && errorTimer > 0) {
@@ -427,14 +429,12 @@ def main():
                 errorTimer--; if(errorTimer <= 0) showMovingError = false;
             }
 
-            // 하단 플레이어 바
             ctx.save();
             ctx.fillStyle = Math.abs(playerVx) <= 0.2 ? '#22c55e' : '#eab308';
             ctx.fillRect(playerX - 25, canvas.height - 25, 50, 10);
             ctx.fillStyle = '#6b7280'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
             ctx.fillText("PLAYER", playerX, canvas.height - 32); ctx.restore();
 
-            // 빨간 점 조준선
             if (!isPaused) {
                 ctx.save(); ctx.fillStyle = '#FF0000';
                 ctx.beginPath(); ctx.arc(mouseX, mouseY, 3.5, 0, Math.PI * 2); ctx.fill(); ctx.restore();
