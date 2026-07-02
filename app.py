@@ -1,7 +1,7 @@
 import streamlit as st
 
 def main():
-    st.set_page_config(page_title="AIMLAB: FINAL BALANCED EDITION", layout="wide")
+    st.set_page_config(page_title="AIMLAB: ULTIMATE REBOOT", layout="wide")
 
     st.markdown("""
         <style>
@@ -14,8 +14,8 @@ def main():
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<h2 style='text-align:center; color:#ff4655; font-weight:900;'>🎯 AIMLAB: FINAL BALANCED EDITION</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#4b5563; font-size:14px;'>마이크로플렉스 Lvl 4 난이도 완화 완료 | 리더보드 VAL-BREAKING 기록 연동 시스템</p>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:#ff4655; font-weight:900;'>🎯 AIMLAB: ULTIMATE REBOOT V2</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#4b5563; font-size:14px;'>트래킹 정상화 | 2라이프 데스 시스템 | 킬사운드 탑재 | 훈련 탈출 시스템</p>", unsafe_allow_html=True)
 
     html_src = """
     <div style="max-width:1240px; margin:0 auto; display:flex; gap:20px; justify-content:center;">
@@ -35,7 +35,7 @@ def main():
                 </div>
                 
                 <div style="display:flex; gap:6px;">
-                    <button onclick="togglePause()" id="pause-btn" style="background:#eab308; color:black; border:none; padding:8px 14px; font-weight:bold; cursor:pointer; border-radius:4px; display:none;">⏸ 일시정지</button>
+                    <button onclick="quitSession()" id="quit-btn" style="background:#ef4444; color:white; border:none; padding:8px 14px; font-weight:bold; cursor:pointer; border-radius:4px; display:none;">🚪 훈련 나가기</button>
                     <button onclick="startSession()" id="start-btn" style="background:#34d399; color:black; border:none; padding:8px 18px; font-weight:bold; cursor:pointer; border-radius:4px;">▶ 훈련 시작</button>
                 </div>
             </div>
@@ -54,7 +54,7 @@ def main():
                     <span style="font-size:16px; font-weight:bold; color:#ff4655; font-family:monospace;" id="sens-val">1.00</span>
                 </div>
                 <input type="range" id="sens-slider" min="0.1" max="4.0" step="0.05" value="1.0" oninput="updateSensitivity(this.value)" style="width:100%; accent-color:#ff4655; cursor:pointer;">
-                <div style="font-size:11px; color:#6b7280; margin-top:6px; line-height:1.4;">* [P] 키나 일시정지 버튼을 누르면 훈련이 멈추고 윈도우 마우스 커서가 복구되어 브라우저 외부로 나갈 수 있습니다.</div>
+                <div style="font-size:11px; color:#6b7280; margin-top:6px; line-height:1.4;">* 💡 <b>트래킹 모드:</b> 이제 표적이 정상 구동하며 마우스를 누르고 있으면 점수가 실시간 상승합니다.</div>
             </div>
 
             <div style="background:#111827; padding:16px; border-radius:6px; border:1px solid #1f2937;">
@@ -83,15 +83,41 @@ def main():
         const canvas = document.getElementById('aimCanvas');
         const ctx = canvas.getContext('2d');
 
+        // 웹 오디오 API를 활용한 즉시 반응형 킬사운드 생성기
+        let audioCtx = null;
+        function playKillSound() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 노출
+                osc.frequency.exponentialRampToValueAtTime(880.00, audioCtx.currentTime + 0.04); // A5 플릭 사운드 변조
+                
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.12);
+            } catch(e) {}
+        }
+
         let mode = 'breaking'; 
         let difficulty = 1;
         let sensitivity = 1.0;
         let isPlaying = false;
-        let isPaused = false; 
         let score = 0;
         let timeLeft = 30.0;
         let totalShots = 0;
         let hitShots = 0;
+
+        // VAL-BREAKING 전용 생명력 시스템 (2번 맞으면 게임오버)
+        let playerLives = 2;
 
         let mouseX = 430, mouseY = 255;
         let rawMouseX = 430, rawMouseY = 255;
@@ -111,22 +137,19 @@ def main():
         let showHitEffect = false;
         let hitEffectTimer = 0;
 
-        // 리더보드 내부 데이터 구조 정의
         let highScores = { gridshot: 0, tracking: 0, microflex: 0, breaking: 0 };
         let targets = [];
 
-        // 🔥 마이크로플렉스 레벨 4의 '극악 난이도 과녁 크기'를 0.35에서 0.75로 전격 상향 조정!
         const diffSpecs = {
-            1: { radiusBonus: 1.4, speedBonus: 0.4, projectileSpeed: 2.5, desc: "<strong>🟢 레벨 1 사양:</strong><br>과녁 반경: 1.4배 상향<br>투사체 속도: 느림" },
-            2: { radiusBonus: 1.1, speedBonus: 0.9, projectileSpeed: 4.0, desc: "<strong>🟡 레벨 2 사양:</strong><br>과녁 반경: 실전 입문 규격<br>투사체 속도: 보통" },
-            3: { radiusBonus: 0.9, speedBonus: 1.4, projectileSpeed: 5.5, desc: "<strong>🟠 레벨 3 사양:</strong><br>과녁 반경: 10% 축소 정밀전<br>투사체 속도: 빠름" },
-            4: { radiusBonus: 0.75, speedBonus: 1.9, projectileSpeed: 7.0, desc: "<strong>🔴 레벨 4 사양 (밸런스 패치):</strong><br>과녁 반경: 현실적인 마이크로 타겟팅 (0.75배)<br>투사체 속도: 극속 대응 훈련" }
+            1: { radiusBonus: 1.4, speedBonus: 0.6, projectileSpeed: 2.5, desc: "<strong>🟢 레벨 1 사양:</strong><br>과녁 반경: 1.4배 상향<br>투사체 속도: 느림" },
+            2: { radiusBonus: 1.1, speedBonus: 1.1, projectileSpeed: 4.0, desc: "<strong>🟡 레벨 2 사양:</strong><br>과녁 반경: 실전 입문 규격<br>투사체 속도: 보통" },
+            3: { radiusBonus: 0.9, speedBonus: 1.6, projectileSpeed: 5.5, desc: "<strong>🟠 레벨 3 사양:</strong><br>과녁 반경: 10% 축소 정밀전<br>투사체 속도: 빠름" },
+            4: { radiusBonus: 0.75, speedBonus: 2.2, projectileSpeed: 7.0, desc: "<strong>🔴 레벨 4 사양 (밸런스 패치):</strong><br>과녁 반경: 현실적인 마이크로 타겟팅 (0.75배)<br>투사체 속도: 극속 대응 훈련" }
         };
 
         window.addEventListener('keydown', (e) => {
             if (e.key.toLowerCase() === 'a') keys.a = true;
             if (e.key.toLowerCase() === 'd') keys.d = true;
-            if (e.key.toLowerCase() === 'p') { togglePause(); }
         });
 
         window.addEventListener('keyup', (e) => {
@@ -135,7 +158,7 @@ def main():
         });
 
         canvas.addEventListener('mousemove', (e) => {
-            if (isPlaying && isPaused) return;
+            if (!isPlaying) return;
             let rect = canvas.getBoundingClientRect();
             rawMouseX = e.clientX - rect.left;
             rawMouseY = e.clientY - rect.top;
@@ -144,41 +167,26 @@ def main():
         canvas.addEventListener('mousedown', () => { isMouseDown = true; });
         window.addEventListener('mouseup', () => { isMouseDown = false; });
 
-        function togglePause() {
-            if (!isPlaying) return;
-            isPaused = !isPaused;
-            const pauseBtn = document.getElementById('pause-btn');
-            if (isPaused) {
-                pauseBtn.innerText = "▶ 재개"; pauseBtn.style.background = "#34d399";
-                canvas.style.cursor = "default";
-            } else {
-                pauseBtn.innerText = "⏸ 일시정지"; pauseBtn.style.background = "#eab308";
-                canvas.style.cursor = "none";
-            }
-        }
-
-        // 로컬스토리지 영구 스코어 로더 및 동기화
         function loadSavedScores() {
-            if (localStorage.getItem('aimlab_v7_hs')) {
-                highScores = JSON.parse(localStorage.getItem('aimlab_v7_hs'));
+            if (localStorage.getItem('aimlab_v8_hs')) {
+                highScores = JSON.parse(localStorage.getItem('aimlab_v8_hs'));
             }
-            if (localStorage.getItem('aimlab_v7_sens')) {
-                sensitivity = parseFloat(localStorage.getItem('aimlab_v7_sens'));
+            if (localStorage.getItem('aimlab_v8_sens')) {
+                sensitivity = parseFloat(localStorage.getItem('aimlab_v8_sens'));
                 document.getElementById('sens-slider').value = sensitivity;
                 document.getElementById('sens-val').innerText = sensitivity.toFixed(2);
             }
             renderScoresUI();
         }
 
-        function saveScores() { localStorage.setItem('aimlab_v7_hs', JSON.stringify(highScores)); }
+        function saveScores() { localStorage.setItem('aimlab_v8_hs', JSON.stringify(highScores)); }
 
         function updateSensitivity(val) {
             sensitivity = parseFloat(val);
             document.getElementById('sens-val').innerText = sensitivity.toFixed(2);
-            localStorage.setItem('aimlab_v7_sens', sensitivity);
+            localStorage.setItem('aimlab_v8_sens', sensitivity);
         }
 
-        // 🏆 우측 UI 패널에 VAL-BREAKING 스코어를 가시화하는 렌더러 함수
         function renderScoresUI() {
             document.getElementById('record-board').innerHTML = `
                 <div style="display:flex; justify-content:space-between; color:#6b7280; border-bottom:1px solid #1f2937; padding-bottom:4px;">
@@ -234,14 +242,7 @@ def main():
                 }
             });
 
-            if (isPlaying) {
-                // 실시간 스위칭 시 기존 점수를 저장하지 않고 깔끔하게 하드 리셋
-                score = 0; timeLeft = 30.0; totalShots = 0; hitShots = 0;
-                playerX = 430; playerVx = 0; enemyShootTimer = 0; projectiles = [];
-                isPaused = false; canvas.style.cursor = "none";
-                const pauseBtn = document.getElementById('pause-btn');
-                pauseBtn.innerText = "⏸ 일시정지"; pauseBtn.style.background = "#eab308";
-            }
+            if (isPlaying) { quitSession(); }
             initTargets();
             updateDashboard();
         }
@@ -253,41 +254,53 @@ def main():
         }
 
         function generateTargetData() {
-            let baseRadius = 18; let baseSpeed = 4.0;
-            if (mode === 'microflex') { baseRadius = 16; baseSpeed = 3.5; } 
-            else if (mode === 'tracking') { baseRadius = 24; baseSpeed = 0; } 
-            else if (mode === 'breaking') { baseRadius = 18; baseSpeed = 0; } 
+            let baseRadius = 18; let baseSpeed = 3.5;
+            // 트래킹 모드 전용 표적 물리 속도 정상 부여 완료
+            if (mode === 'tracking') { baseRadius = 22; baseSpeed = 4.5; }
+            else if (mode === 'microflex') { baseRadius = 16; baseSpeed = 4.0; } 
+            else if (mode === 'breaking') { baseRadius = 18; baseSpeed = 2.0; } // 좌우로만 살짝 움직임
 
             let spec = diffSpecs[difficulty];
             return {
                 x: 120 + Math.random() * (canvas.width - 240),
-                y: 100 + Math.random() * (mode === 'breaking' ? 120 : (canvas.height - 240)),
+                y: 100 + Math.random() * (mode === 'breaking' ? 80 : (canvas.height - 240)),
                 radius: baseRadius * spec.radiusBonus,
                 vx: (Math.random() > 0.5 ? 1 : -1) * (baseSpeed * spec.speedBonus),
-                vy: (mode === 'breaking' || mode === 'tracking') ? 0 : (Math.random() - 0.5) * (baseSpeed * spec.speedBonus)
+                vy: (mode === 'breaking') ? 0 : (Math.random() - 0.5) * (baseSpeed * spec.speedBonus)
             };
         }
 
         function startSession() {
             if (isPlaying) return;
-            isPlaying = true; isPaused = false;
+            isPlaying = true;
             canvas.style.cursor = "none";
             score = 0; timeLeft = 30.0; totalShots = 0; hitShots = 0;
+            playerLives = 2; // 브레이킹용 목숨 리셋
             playerX = 430; playerVx = 0; enemyShootTimer = 0; projectiles = [];
             initTargets();
             document.getElementById('start-btn').style.background = '#4b5563';
-            document.getElementById('start-btn').innerText = "⏱ FOCUS LIVE";
-            document.getElementById('pause-btn').style.display = "inline-block";
+            document.getElementById('start-btn').innerText = "⏱ 훈련 진행중";
+            document.getElementById('quit-btn').style.display = "inline-block";
         }
 
-        function endSession() {
-            isPlaying = false; isPaused = false;
+        // 🚪 일시정지 대신 완벽한 이탈/종료 기능 구현
+        function quitSession() {
+            isPlaying = false;
             canvas.style.cursor = "default";
             document.getElementById('start-btn').style.background = '#34d399';
             document.getElementById('start-btn').innerText = "▶ 훈련 시작";
-            document.getElementById('pause-btn').style.display = "none";
+            document.getElementById('quit-btn').style.display = "none";
+            projectiles = [];
+            updateDashboard();
+        }
 
-            // 🔥 VAL-BREAKING 스코어가 정상적으로 하이스코어 객체에 판정/기록되도록 업데이트
+        function endSession() {
+            isPlaying = false;
+            canvas.style.cursor = "default";
+            document.getElementById('start-btn').style.background = '#34d399';
+            document.getElementById('start-btn').innerText = "▶ 훈련 시작";
+            document.getElementById('quit-btn').style.display = "none";
+
             if (score > (highScores[mode] || 0)) { 
                 highScores[mode] = score; 
                 saveScores(); 
@@ -295,8 +308,9 @@ def main():
             }
         }
 
+        // 단발성 클릭 히트 판정 (그리드샷, 마이크로플렉스, 브레이킹 전용)
         canvas.addEventListener('mousedown', () => {
-            if (!isPlaying || isPaused) return;
+            if (!isPlaying) return;
             if (mode === 'tracking') return;
 
             totalShots++;
@@ -310,6 +324,7 @@ def main():
                         updateDashboard(); return;
                     }
                     hitShots++; score += 100; hitAny = true;
+                    playKillSound(); // 킬사운드 방출
                     targets[i] = generateTargetData(); break;
                 }
             }
@@ -326,8 +341,6 @@ def main():
         }
 
         function loop() {
-            if (isPlaying && isPaused) { requestAnimationFrame(loop); return; }
-
             if (showHitEffect && hitEffectTimer > 0) {
                 ctx.fillStyle = '#260a0f'; hitEffectTimer--;
                 if(hitEffectTimer <= 0) showHitEffect = false;
@@ -336,10 +349,12 @@ def main():
             }
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
+            // 격자 배경선 드로잉
             ctx.strokeStyle = '#121620'; ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
             for(let j=0; j<canvas.height; j+=50) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
 
+            // 플레이어 좌우 이동 관성 계산
             if (keys.a) playerVx = Math.max(-playerMaxSpeed, playerVx - playerAcc);
             else if (keys.d) playerVx = Math.min(playerMaxSpeed, playerVx + playerAcc);
             else {
@@ -348,6 +363,7 @@ def main():
             }
             playerX = Math.max(40, Math.min(canvas.width - 40, playerX + playerVx));
 
+            // 브레이킹 모드 전용 무빙샷 탄퍼짐 구현
             let spreadX = 0, spreadY = 0;
             if (mode === 'breaking' && Math.abs(playerVx) > 0.2) {
                 spreadX = (Math.random() - 0.5) * (Math.abs(playerVx) * 12);
@@ -360,9 +376,20 @@ def main():
                 if (timeLeft <= 0) { timeLeft = 0; endSession(); }
                 updateDashboard();
 
+                // 🔄 [트래킹 모드 코어 메커니즘 정상화 및 전용 점수 연산]
+                if (mode === 'tracking' && isMouseDown) {
+                    targets.forEach((t) => {
+                        let dist = Math.hypot(mouseX - t.x, mouseY - t.y);
+                        if (dist <= t.radius) {
+                            score += 2; // 누르고 과녁 조준 유지 시 점수 실시간 업
+                        }
+                    });
+                }
+
+                // VAL-BREAKING 전용: 투사체 발사 타이머 연산
                 if (mode === 'breaking') {
                     enemyShootTimer++;
-                    let shootInterval = difficulty === 1 ? 75 : (difficulty === 2 ? 55 : (difficulty === 3 ? 38 : 26));
+                    let shootInterval = difficulty === 1 ? 70 : (difficulty === 2 ? 50 : (difficulty === 3 ? 35 : 24));
                     if (enemyShootTimer >= shootInterval && targets.length > 0) {
                         enemyShootTimer = 0;
                         let t = targets[0];
@@ -379,15 +406,25 @@ def main():
                     }
                 }
 
+                // 투사체 이동 및 캐릭터 2회 피격 사망 연산
                 for (let i = projectiles.length - 1; i >= 0; i--) {
                     let p = projectiles[i];
                     p.x += p.vx; p.y += p.vy;
 
                     if (p.y >= canvas.height - 25 && p.y <= canvas.height - 10) {
                         if (p.x >= playerX - 30 && p.x <= playerX + 30) {
-                            score = Math.max(0, score - 50);
+                            // 대미지 발생
+                            playerLives--;
                             showHitEffect = true; hitEffectTimer = 10;
-                            projectiles.splice(i, 1); updateDashboard(); continue;
+                            projectiles.splice(i, 1);
+                            
+                            // 💔 2회 피격 시 즉시 종료 (게임오버) 사양 작동
+                            if (playerLives <= 0) {
+                                quitSession();
+                                alert("💥 미사일에 2회 피격되었습니다! 게임 오버!");
+                                break;
+                            }
+                            continue;
                         }
                     }
 
@@ -397,19 +434,15 @@ def main():
                     ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill(); ctx.restore();
                 }
 
+                // 모든 타겟들의 물리 바운딩 처리 및 렌더링
                 targets.forEach((t) => {
                     t.x += t.vx; t.y += t.vy;
                     if(t.x - t.radius < 15 || t.x + t.radius > canvas.width - 15) t.vx *= -1;
                     if(t.y - t.radius < 15 || t.y + t.radius > canvas.height - 15) t.vy *= -1;
 
-                    if (mode === 'tracking') {
-                        let dist = Math.hypot(mouseX - t.x, mouseY - t.y);
-                        if (dist <= t.radius && isMouseDown) score += 2;
-                    }
-
                     ctx.save();
                     if(mode === 'gridshot') ctx.strokeStyle = '#38bdf8';
-                    else if(mode === 'tracking') ctx.strokeStyle = '#00f2fe';
+                    else if(mode === 'tracking') { ctx.strokeStyle = '#00f2fe'; ctx.fillStyle = 'rgba(0, 242, 254, 0.1)'; ctx.fill(); } // 트래킹 타겟 가시성 확보
                     else if(mode === 'microflex') ctx.strokeStyle = '#f43f5e';
                     else { ctx.strokeStyle = '#ff4655'; ctx.shadowColor = '#ff4655'; ctx.shadowBlur = 6; }
                     
@@ -420,7 +453,7 @@ def main():
             } else {
                 ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
                 ctx.fillText("원하는 설정을 마치고 상단 [▶ 훈련 시작]을 클릭하세요.", canvas.width/2, canvas.height/2 - 20);
-                ctx.fillText("실시간 모드 변경 완벽 지원 | 모든 최고 기록은 리더보드에 자동 업데이트됩니다.", canvas.width/2, canvas.height/2 + 10);
+                ctx.fillText("VAL-BREAKING 모드: 2번 피격되면 즉시 탈락합니다! 조심하세요!", canvas.width/2, canvas.height/2 + 10);
             }
 
             if (showMovingError && errorTimer > 0) {
@@ -429,16 +462,23 @@ def main():
                 errorTimer--; if(errorTimer <= 0) showMovingError = false;
             }
 
+            // 하단 플레이어 바 및 목숨(Life) 텍스트 렌더링
             ctx.save();
             ctx.fillStyle = Math.abs(playerVx) <= 0.2 ? '#22c55e' : '#eab308';
             ctx.fillRect(playerX - 25, canvas.height - 25, 50, 10);
-            ctx.fillStyle = '#6b7280'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
-            ctx.fillText("PLAYER", playerX, canvas.height - 32); ctx.restore();
-
-            if (!isPaused) {
-                ctx.save(); ctx.fillStyle = '#FF0000';
-                ctx.beginPath(); ctx.arc(mouseX, mouseY, 3.5, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+            
+            ctx.fillStyle = '#e5e7eb'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+            if (mode === 'breaking' && isPlaying) {
+                let heartStr = playerLives === 2 ? "❤️ ❤️" : "❤️ 💔";
+                ctx.fillText("HP: " + heartStr, playerX, canvas.height - 35);
+            } else {
+                ctx.fillText("PLAYER", playerX, canvas.height - 35);
             }
+            ctx.restore();
+
+            // 빨간 점 조준선 고정 드로잉
+            ctx.save(); ctx.fillStyle = '#FF0000';
+            ctx.beginPath(); ctx.arc(mouseX, mouseY, 3.5, 0, Math.PI * 2); ctx.fill(); ctx.restore();
 
             requestAnimationFrame(loop);
         }
