@@ -1,4 +1,4 @@
-=import streamlit as st
+import streamlit as st
 
 def main():
     st.set_page_config(page_title="AIMLAB + VALORANT RANGE", layout="wide")
@@ -81,7 +81,7 @@ def main():
             <canvas id="miniCanvas" width="620" height="200" style="background:#070913; border:2px dashed #a855f7; border-radius:6px; cursor:crosshair;"></canvas>
         </div>
 
-        <h3 class="section-title" style="color:#ff4655; border-color:#ff4655;">STAGE 03 : VALORANT THE RANGE (사격 연습장 리얼 오마주)</h3>
+        <h3 class="section-title" style="color:#ff4655; border-color:#ff4655;">STAGE 03 : VALORANT THE RANGE (사격 연습장 무제한 모드)</h3>
         <div style="background:#111625; padding:15px; border-radius:8px; border:1px solid #1f2942; text-align:center;">
             <p style="margin:0 0 10px 0; color:#9ca3af; font-size:12px;">🎯 움직이면서 쏘면 <b>에임오차(탄퍼짐)</b>가 발생합니다! <b>A/D 키 무빙 후 브레이킹을 걸고 정지 상태에서 헤드</b>를 노리세요.</p>
             <canvas id="rangeCanvas" width="1160" height="400" style="background:#0e111a; border:2px solid #ff4655; border-radius:6px; cursor:none;"></canvas>
@@ -149,7 +149,7 @@ def main():
         // ========================================================
         let isMiniHovered = false; let miniScore = 0; let miniCombo = 0; let miniTargets = [];
         
-        let isRangePlaying = false; let rangeScore = 0; let rangeTimeLeft = 30.0;
+        let isRangePlaying = false; let rangeScore = 0;
         let rangePlayerX = 580; let rangePlayerVx = 0; 
         let rangeBots = []; let rMouseX = 580, rMouseY = 200;
         
@@ -188,7 +188,7 @@ def main():
             });
         }
 
-        // --- 마우스 트래킹 리스너 바인딩 ---
+        // --- 마우스/키보드 트래킹 리스너 바인딩 ---
         window.addEventListener('keydown', (e) => {
             if (e.key.toLowerCase() === 'a') keys.a = true; if (e.key.toLowerCase() === 'd') keys.d = true;
         });
@@ -236,19 +236,19 @@ def main():
         }
 
         function handleRangeClick() {
-            // 중앙 제어판 사격 스위치 체크
+            // 제어판 사격 스위치 체크
             for(let i=0; i<rangeUIBox.length; i++) {
                 let box = rangeUIBox[i];
                 if (rMouseX >= box.x && rMouseX <= box.x + box.w && rMouseY >= box.y && rMouseY <= box.y + box.h) {
                     playValorantKillSound();
-                    if (box.id === 'start' && !isRangePlaying) { isRangePlaying = true; rangeScore = 0; rangeTimeLeft = 30.0; spawnRangeBot(); }
+                    if (box.id === 'start' && !isRangePlaying) { isRangePlaying = true; rangeScore = 0; spawnRangeBot(); }
                     if (box.id === 'clear') { isRangePlaying = false; rangeBots = []; }
                     return;
                 }
             }
             if (!isRangePlaying) return;
 
-            // 움직이면서 쏘면 패널티 발생 (에임 오차 크로스헤어 크기 비례 난수 가중)
+            // 탄퍼짐 디비에이션 계산
             let spreadMult = Math.abs(rangePlayerVx) * 3.5;
             let finalMouseX = rMouseX + (Math.random() - 0.5) * spreadMult;
             let finalMouseY = rMouseY + (Math.random() - 0.5) * spreadMult;
@@ -256,7 +256,6 @@ def main():
             let hit = false;
             for(let i = rangeBots.length - 1; i >= 0; i--) {
                 let b = rangeBots[i];
-                // 머리(헤드) 타격 히트박스 영역 계산
                 if (Math.hypot(finalMouseX - b.x, finalMouseY - b.headY) <= b.headR) {
                     rangeScore += 100; hit = true; playValorantKillSound();
                     rangeBots.splice(i, 1); spawnRangeBot(); break;
@@ -276,12 +275,11 @@ def main():
         }
 
         function spawnRangeBot() {
-            // 발로란트 연습장 플랫폼 중앙 가로선 스폰 정렬 오마주
             rangeBots = [{
                 x: 350 + Math.random() * 460,
-                y: 220, // 전방 스폰 플랫폼 y축 베이스 고정
+                y: 220,
                 bodyW: 24, bodyH: 45,
-                headY: 195, headR: 10, // 정밀 헤드샷 히트박스 라인 구획
+                headY: 195, headR: 10,
                 vx: (Math.random() > 0.5 ? 1 : -1) * 1.6
             }];
         }
@@ -333,47 +331,40 @@ def main():
             } else { miniCtx.fillStyle = '#4b5563'; miniCtx.font = '12px sans-serif'; miniCtx.textAlign = 'center'; miniCtx.fillText("이곳에 커서를 가져오면 손풀기 타겟이 개방됩니다.", miniCanvas.width/2, miniCanvas.height/2); }
 
 
-            // STAGE 3 가동 연산 (★ 리얼 발로란트 연습장 렌더 프레임)
+            // STAGE 3 가동 연산 (★ 무제한 발로란트 연습장 렌더 프레임)
             rangeCtx.fillStyle = '#0b0f19'; rangeCtx.fillRect(0, 0, rangeCanvas.width, rangeCanvas.height);
+            rangeCtx.fillStyle = '#1e293b'; rangeCtx.fillRect(250, 260, 660, 8); // 플랫폼 바닥선
             
-            // 전방 스폰 플랫폼 바닥선 시각화
-            rangeCtx.fillStyle = '#1e293b'; rangeCtx.fillRect(250, 260, 660, 8);
-            
-            // 상단 제어 전광판 스위치 박스 페인팅
+            // 전광판 버튼 시스템
             rangeUIBox.forEach(box => {
                 rangeCtx.fillStyle = box.id === 'start' ? (isRangePlaying ? '#1e293b' : '#0f766e') : '#991b1b'; rangeCtx.fillRect(box.x, box.y, box.w, box.h);
                 rangeCtx.fillStyle = '#ffffff'; rangeCtx.font = 'bold 11px sans-serif'; rangeCtx.textAlign = 'center'; rangeCtx.fillText(box.label, box.x + box.w/2, box.y + box.h/1.6);
             });
 
-            // 내부 통계 스코어보드 렌더링
+            // 내부 스탯 정보 출력 (시간 항목 제거 완료)
             rangeCtx.fillStyle = '#94a3b8'; rangeCtx.font = 'bold 13px monospace'; rangeCtx.textAlign = 'left';
-            rangeCtx.fillText(`[THE RANGE LIVE] HEADSHOT_SCORE: ${rangeScore} | TIME: ${rangeTimeLeft.toFixed(1)}s`, 45, 55);
+            rangeCtx.fillText(`[THE RANGE LIVE] HEADSHOT_SCORE: ${rangeScore} | MODE: INFINITE TRAINING`, 45, 55);
 
-            // 연습장 내 유저 무빙 물리법칙 동기화
+            // 유저 무빙 물리 연산
             if (keys.a) rangePlayerVx = Math.max(-4.5, rangePlayerVx - 0.6); else if (keys.d) rangePlayerVx = Math.min(4.5, rangePlayerVx + 0.6); else { rangePlayerVx *= 0.65; }
             rangePlayerX = Math.max(100, Math.min(rangeCanvas.width - 100, rangePlayerX + rangePlayerVx));
 
             if (isRangePlaying) {
-                rangeTimeLeft -= 1/60; if(rangeTimeLeft <= 0) { rangeTimeLeft = 0; isRangePlaying = false; }
-                
-                // 실제 인형 모양 봇 렌더링
                 rangeBots.forEach(b => {
                     b.x += b.vx; if(b.x < 300 || b.x > 860) b.vx *= -1;
+                    rangeCtx.fillStyle = '#334155'; rangeCtx.fillRect(b.x - b.bodyW/2, b.y, b.bodyW, b.bodyH); // 몸통
                     
-                    // 몸통 그리기
-                    rangeCtx.fillStyle = '#334155'; rangeCtx.fillRect(b.x - b.bodyW/2, b.y, b.bodyW, b.bodyH);
-                    // 대가리 (헤드 히트박스 영역) 그리기
                     let hGrad = rangeCtx.createRadialGradient(b.x, b.headY, 2, b.x, b.headY, b.headR);
                     hGrad.addColorStop(0, '#ffffff'); hGrad.addColorStop(1, '#ff4655');
-                    rangeCtx.fillStyle = hGrad; rangeCtx.beginPath(); rangeCtx.arc(b.x, b.headY, b.headR, 0, Math.PI*2); rangeCtx.fill();
+                    rangeCtx.fillStyle = hGrad; rangeCtx.beginPath(); rangeCtx.arc(b.x, b.headY, b.headR, 0, Math.PI*2); rangeCtx.fill(); // 머리
                     rangeCtx.strokeStyle = '#ffffff'; rangeCtx.lineWidth = 1; rangeCtx.stroke();
                 });
             }
 
-            // 하단 조작 유저 위치 지시 블록 표출
+            // 하단 조작 유저 위치 패드
             rangeCtx.fillStyle = '#38bdf8'; rangeCtx.fillRect(rangePlayerX - 20, rangeCanvas.height - 15, 40, 5);
 
-            // 이동 속도 연동 유동 크로스헤어(탄퍼짐 디스플레이 오마주) 계산
+            // 무빙 속도 기반 가변 크로스헤어
             let spreadOffset = Math.abs(rangePlayerVx) * 3.5;
             rangeCtx.strokeStyle = Math.abs(rangePlayerVx) <= 0.15 ? '#22c55e' : '#f59e0b'; rangeCtx.lineWidth = 1.8;
             rangeCtx.beginPath(); rangeCtx.moveTo(rMouseX - 5 - spreadOffset, rMouseY); rangeCtx.lineTo(rMouseX - 1 - spreadOffset, rMouseY); rangeCtx.stroke();
