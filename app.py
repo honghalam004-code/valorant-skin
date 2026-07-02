@@ -56,13 +56,16 @@ def main():
                     </div>
                 </div>
 
-                <div style="background:#111625; padding:12px; border-radius:6px; border:1px solid #1f2942;">
+                <div style="background:#111625; padding:12px; border-radius:6px; border:1px solid #1f2942; min-height:115px;">
                     <div style="color:#00f2fe; font-size:11px; font-weight:bold; margin-bottom:6px;">📊 난이도 레벨 설정</div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px; margin-bottom:6px;">
                         <button onclick="setDifficulty(1)" id="df-1" style="background:#22c55e; color:black; border:none; padding:6px; font-weight:bold; cursor:pointer; border-radius:4px; font-size:11px;">레벨 1</button>
                         <button onclick="setDifficulty(2)" id="df-2" style="background:#07080b; color:#e5e7eb; border:1px solid #374151; padding:6px; font-weight:bold; cursor:pointer; border-radius:4px; font-size:11px;">레벨 2</button>
                         <button onclick="setDifficulty(3)" id="df-3" style="background:#07080b; color:#e5e7eb; border:1px solid #374151; padding:6px; font-weight:bold; cursor:pointer; border-radius:4px; font-size:11px;">레벨 3</button>
                         <button onclick="setDifficulty(4)" id="df-4" style="background:#07080b; color:#e5e7eb; border:1px solid #374151; padding:6px; font-weight:bold; cursor:pointer; border-radius:4px; font-size:11px;">레벨 4</button>
+                    </div>
+                    <div style="font-size:10px; color:#9ca3af; line-height:1.4;" id="mode-tip">
+                        <b>GRIDSHOT:</b> 전방의 과녁 3개를 빠르게 제거하는 플릭 훈련장입니다.
                     </div>
                 </div>
             </div>
@@ -71,7 +74,7 @@ def main():
         <div style="display:flex; gap:20px; width:100%;">
             
             <div style="flex: 1; background:#111625; padding:12px; border-radius:8px; border:1px solid #1f2942;">
-                <h4 style="margin:0 0 6px 0; color:#a855f7; font-size:13px; font-weight:900;">STAGE 02 : EASY AIM POP (🟢 RGX 쫀득한 찰진 손맛)</h4>
+                <h4 style="margin:0 0 6px 0; color:#a855f7; font-size:13px; font-weight:900;">STAGE 02 : EASY AIM POP (🟢 RGX 쫀득하고 찰진 타격)</h4>
                 <div style="display:flex; gap:10px; font-family:monospace; font-size:12px; font-weight:bold; margin-bottom:8px;">
                     <div style="color:#a855f7;" id="mini-score">SCORE: 0</div>
                     <div style="color:#34d399;" id="mini-combo">COMBO: 0</div>
@@ -80,10 +83,10 @@ def main():
             </div>
 
             <div style="flex: 1; background:#111625; padding:12px; border-radius:8px; border:1px solid #1f2942;">
-                <h4 style="margin:0 0 6px 0; color:#ff4655; font-size:13px; font-weight:900;">STAGE 03 : VALORANT THE RANGE (🎯 와이드 봇 라인 연습장)</h4>
+                <h4 style="margin:0 0 6px 0; color:#ff4655; font-size:13px; font-weight:900;">STAGE 03 : VALORANT THE RANGE (🎯 와이드 정면 봇 라인)</h4>
                 <div style="display:flex; gap:12px; font-family:monospace; font-size:12px; font-weight:bold; margin-bottom:8px;">
                     <div style="color:#ff4655;" id="range-dashboard">[THE RANGE] HEADSHOTS: 0</div>
-                    <div style="color:#38bdf8; font-size:11px; font-weight:normal;">*인게임 싱크: 정면 넓은 라인에 봇들이 리얼하게 늘어서 배치됩니다.</div>
+                    <div style="color:#38bdf8; font-size:11px; font-weight:normal;">*오리지널 구조: 정면 가로축으로 넓게 나열된 봇들을 플릭 사격하세요.</div>
                 </div>
                 <canvas id="rangeCanvas" width="550" height="200" style="background:#090c14; border:2px solid #ff4655; border-radius:6px; cursor:none; width:100%;"></canvas>
             </div>
@@ -97,7 +100,7 @@ def main():
         const miniCanvas = document.getElementById('miniCanvas'); const miniCtx = miniCanvas.getContext('2d');
         const rangeCanvas = document.getElementById('rangeCanvas'); const rangeCtx = rangeCanvas.getContext('2d');
 
-        // --- 🟢 [RGX REAL TIGHT MIX] 깡통 소리 삭제, 쫀득하고 찰지게 감기는 타격 오디오 엔진 ---
+        // --- 🟢 [RGX REAL TIGHT MIX] 쫀득하게 착 감기는 타격 오디오 재생 엔진 ---
         let audioCtx = null;
 
         function playRGXSound() {
@@ -107,8 +110,7 @@ def main():
 
                 let now = audioCtx.currentTime;
 
-                // 1. 💥 촥 감기는 질감의 로우/미드 베이스 타격 (Tight Squash Hit)
-                // 로우 패스 노이즈와 커스텀 오실레이터를 묶어 깡통 소리를 지우고 끈적하고 단단한 밀도감을 줌
+                // 1. 끈적하고 묵직한 베이스 타격 레이어 (Tight Squash Blow)
                 let bufferSize = audioCtx.sampleRate * 0.04;
                 let noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 let noiseData = noiseBuffer.getChannelData(0);
@@ -120,7 +122,7 @@ def main():
 
                 let noiseFilter = audioCtx.createBiquadFilter();
                 noiseFilter.type = 'lowpass';
-                noiseFilter.frequency.setValueAtTime(350, now); // 먹먹하고 단단하게 가둠
+                noiseFilter.frequency.setValueAtTime(350, now);
 
                 let noiseGain = audioCtx.createGain();
                 noiseGain.gain.setValueAtTime(1.2, now);
@@ -130,22 +132,21 @@ def main():
                 noiseFilter.connect(noiseGain);
                 noiseGain.connect(audioCtx.destination);
 
-                // 2. ⚡ RGX 고유의 쫀득한 메탈릭 전자 파형 코어 (Cyber Elastic Snap)
+                // 2. 피치 하강을 이용한 쫀득한 전자음 코어 (Cyber Elastic Snap)
                 let osc = audioCtx.createOscillator();
                 let oscGain = audioCtx.createGain();
                 
-                osc.type = 'triangle'; // 부드럽고 묵직한 배음
+                osc.type = 'triangle';
                 osc.frequency.setValueAtTime(580, now);
-                // 주파수를 순간적으로 아래로 강하게 떨어뜨려 "촥-" 하고 달라붙는 쫀득한 청각적 탄성을 유도
                 osc.frequency.exponentialRampToValueAtTime(80, now + 0.03); 
 
                 oscGain.gain.setValueAtTime(0.9, now);
-                oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04); // 아주 정밀하고 타이트하게 끊어침
+                oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
 
                 osc.connect(oscGain);
                 oscGain.connect(audioCtx.destination);
 
-                // 3. 🔌 특유의 하이테크 레이저 잔향음 (Subtle Magnetic Tail)
+                // 3. 미세한 가동음 레이저 잔향 (Subtle Magnetic Tail)
                 let tailOsc = audioCtx.createOscillator();
                 let tailGain = audioCtx.createGain();
                 tailOsc.type = 'sine';
@@ -168,7 +169,7 @@ def main():
         }
 
         // ========================================================
-        // ⚙️ 전역 변수 관리부
+        // ⚙️ 전역 물리 변수 엔진 관리부
         // ========================================================
         let mode = 'gridshot'; let difficulty = 1; let isPlaying = false; 
         let score = 0; let timeLeft = 30.0; let totalShots = 0; let hitShots = 0; let userBestScore = 0;
@@ -319,7 +320,6 @@ def main():
                 if (Math.hypot(finalMouseX - b.x, finalMouseY - b.headY) <= b.headR) {
                     rangeScore++; hit = true; 
                     playRGXSound(); 
-                    // 처치된 봇은 겹치지 않는 새로운 좌우 라인 좌표로 개별 재생성
                     rangeBots[i] = createSingleBot(i); break;
                 }
             }
@@ -336,13 +336,11 @@ def main():
             return { x: 120 + Math.random() * 650, y: 80 + Math.random() * 200, radius: baseRadius, vx: 0, vy: 0 };
         }
 
-        // ★ [리얼 사격장 시스템] 봇들이 전방 가로축(X축) 라인에 균등 분할 배치되어 길게 늘어섭니다.
         function initRangeBots() {
             rangeBots = [];
             for (let i = 0; i < 5; i++) { rangeBots.push(createSingleBot(i)); }
         }
         function createSingleBot(index) {
-            // 좌우 폭(550)을 기준으로 구역을 나누어 자연스럽게 늘어선 대형 구축
             let sectorWidth = 400 / 5;
             let startX = 70 + (sectorWidth * index) + (Math.random() * (sectorWidth - 25));
             return {
@@ -389,7 +387,9 @@ def main():
             }
             ctx.fillStyle = Math.abs(playerVx) <= 0.15 ? '#22c55e' : '#eab308'; ctx.fillRect(playerX - 20, canvas.height - 15, 40, 6);
             if (showMovingError && errorTimer > 0) { ctx.fillStyle = '#ff4655'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText("❌ 브레이킹 미체결 (정지 상태에서 사격하세요)", canvas.width/2, 60); errorTimer--; if(errorTimer <= 0) showMovingError = false; }
-            ctx.fillStyle = '#ff4655'; ctx.beginPath(); ctx.arc(mouseX, mouseY, 3.5, 0, Math.PI*2); fill();
+            
+            // 크로스헤어 렌더
+            ctx.fillStyle = '#ff4655'; ctx.beginPath(); ctx.arc(mouseX, mouseY, 3.5, 0, Math.PI*2); ctx.fill();
 
 
             // STAGE 02: 손풀기 미니게임 루프
@@ -405,9 +405,9 @@ def main():
             } else { miniCtx.fillStyle = '#4b5563'; miniCtx.font = '11px sans-serif'; miniCtx.textAlign = 'center'; miniCtx.fillText("이곳에 커서를 가져오면 손풀기 타겟이 개방됩니다.", miniCanvas.width/2, miniCanvas.height/2); }
 
 
-            // STAGE 03: 발로란트 와이드 대형 사격장 루프
+            // STAGE 03: 발로란트 와이드 정면 사격장 루프
             rangeCtx.fillStyle = '#090c14'; rangeCtx.fillRect(0, 0, rangeCanvas.width, rangeCanvas.height);
-            rangeCtx.fillStyle = '#1e293b'; rangeCtx.fillRect(50, 142, 450, 2); // 하단 베이스 가이드라인 확장
+            rangeCtx.fillStyle = '#1e293b'; rangeCtx.fillRect(50, 142, 450, 2);
             
             rangeUIBox.forEach(box => {
                 rangeCtx.fillStyle = box.id === 'start' ? (isRangePlaying ? '#1e293b' : '#0f766e') : '#991b1b'; rangeCtx.fillRect(box.x, box.y, box.w, box.h);
@@ -420,10 +420,10 @@ def main():
             if (isRangePlaying) {
                 if (rangeBots.length === 0) initRangeBots();
                 rangeBots.forEach(b => {
-                    rangeCtx.fillStyle = '#334155'; rangeCtx.fillRect(b.x - b.bodyW/2, b.y, b.bodyW, b.bodyH); // 더 견고한 하체 기둥색
+                    rangeCtx.fillStyle = '#334155'; rangeCtx.fillRect(b.x - b.bodyW/2, b.y, b.bodyW, b.bodyH);
                     
                     let hGrad = rangeCtx.createRadialGradient(b.x, b.headY, 0.8, b.x, b.headY, b.headR);
-                    hGrad.addColorStop(0, '#ffffff'); hGrad.addColorStop(0.3, '#00ffcc'); hGrad.addColorStop(1, '#0f766e'); // 🟢 RGX 네온 코어 그라데이션
+                    hGrad.addColorStop(0, '#ffffff'); hGrad.addColorStop(0.3, '#00ffcc'); hGrad.addColorStop(1, '#0f766e');
                     rangeCtx.fillStyle = hGrad; rangeCtx.beginPath(); rangeCtx.arc(b.x, b.headY, b.headR, 0, Math.PI*2); rangeCtx.fill();
                     rangeCtx.strokeStyle = '#00ffcc'; rangeCtx.lineWidth = 1; rangeCtx.stroke();
                 });
