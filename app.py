@@ -1,7 +1,8 @@
 import streamlit as st
 
 def main():
-    st.set_page_config(page_title="AIMLAB + VALORANT RANGE", layout="wide")
+    # 화면을 꽉 채우고 스크롤 스트레스를 줄이도록 와이드 설정
+    st.set_page_config(page_title="VALORANT THE RANGE + AIMLAB", layout="wide")
 
     st.markdown("""
         <style>
@@ -9,17 +10,23 @@ def main():
         iframe { border: none !important; }
         .section-title {
             color: #ff4655; font-weight: 900; letter-spacing: 2px; 
-            border-bottom: 2px solid #1f293d; padding-bottom: 8px; margin-top: 30px;
+            border-bottom: 2px solid #1f293d; padding-bottom: 8px; margin-top: 15px;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<h1 style='text-align:center; color:#ff4655; font-weight:900;'>🎯 AIM TRAINING ULTIMATE SYSTEM</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center; color:#ff4655; font-weight:900; margin-bottom:5px;'>🎯 AIM TRAINING ULTIMATE SYSTEM</h1>", unsafe_allow_html=True)
 
     html_src = """
-    <div style="max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:35px;">
+    <div style="max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:25px;">
         
-        <h3 class="section-title" style="color:#00f2fe; border-color:#00f2fe;">STAGE 01 : MAIN AIMLAB (4대 모드 완전 가동)</h3>
+        <h3 class="section-title" style="color:#ff4655; border-color:#ff4655;">STAGE 01 : VALORANT THE RANGE (사격 연습장 무제한 모드)</h3>
+        <div style="background:#111625; padding:15px; border-radius:8px; border:1px solid #1f2942; text-align:center;">
+            <p style="margin:0 0 10px 0; color:#9ca3af; font-size:12px;">🎯 무빙 후 <b>A/D 키를 떼서 브레이킹을 걸고 완전히 정지한 상태에서 헤드</b>를 노리세요! (시간 무제한)</p>
+            <canvas id="rangeCanvas" width="1160" height="380" style="background:#0e111a; border:2px solid #ff4655; border-radius:6px; cursor:none;"></canvas>
+        </div>
+
+        <h3 class="section-title" style="color:#00f2fe; border-color:#00f2fe;">STAGE 02 : MAIN AIMLAB (4대 훈련 모드)</h3>
         <div style="display:flex; gap:20px; justify-content:center;">
             <div style="flex: 1; text-align:center;">
                 <div style="display:flex; justify-content:space-between; align-items:center; background:#111625; padding:12px 20px; border-radius:6px; margin-bottom:12px; border:1px solid #1f2942;">
@@ -39,7 +46,7 @@ def main():
                         <button onclick="startSession()" id="start-btn" style="background:#34d399; color:black; border:none; padding:8px 18px; font-weight:bold; cursor:pointer; border-radius:4px;">▶ 훈련 시작</button>
                     </div>
                 </div>
-                <canvas id="aimCanvas" width="880" height="420" style="background:#090b15; border:2px solid #1f2942; border-radius:6px; cursor:none;"></canvas>
+                <canvas id="aimCanvas" width="880" height="380" style="background:#090b15; border:2px solid #1f2942; border-radius:6px; cursor:none;"></canvas>
             </div>
 
             <div style="width:260px; display:flex; flex-direction:column; gap:12px;">
@@ -68,23 +75,17 @@ def main():
             </div>
         </div>
 
-        <h3 class="section-title" style="color:#a855f7; border-color:#a855f7;">STAGE 02 : EASY AIM POP (손풀기 미니게임)</h3>
-        <div style="background:#111625; padding:20px; border-radius:8px; border:1px solid #1f2942; display:flex; gap:25px; align-items:center;">
+        <h3 class="section-title" style="color:#a855f7; border-color:#a855f7;">STAGE 03 : EASY AIM POP (손풀기)</h3>
+        <div style="background:#111625; padding:15px; border-radius:8px; border:1px solid #1f2942; display:flex; gap:25px; align-items:center;">
             <div style="flex:1;">
-                <p style="margin:0 0 10px 0; color:#e5e7eb; font-size:14px; font-weight:bold;">💡 마우스만 올리면 가동되는 편안한 서프 에임 판</p>
-                <p style="margin:0 0 15px 0; color:#9ca3af; font-size:12px; line-height:1.5;">수축 속도를 완화하여 조준선을 편안하게 옮겨 타격하기 좋습니다. 인공음이 완전히 배제되었습니다.</p>
+                <p style="margin:0 0 5px 0; color:#e5e7eb; font-size:14px; font-weight:bold;">💡 마우스만 올리면 가동되는 편안한 서프 에임 판</p>
+                <p style="margin:0 0 10px 0; color:#9ca3af; font-size:12px; line-height:1.5;">조준선을 편안하게 옮겨 타격하기 좋습니다. 새로 깎은 기계식 타격음이 동일하게 적용됩니다.</p>
                 <div style="display:flex; gap:15px; font-family:monospace; font-size:14px; font-weight:bold; background:#070913; padding:12px; border-radius:6px; border:1px solid #1f2942;">
                     <div style="color:#a855f7;" id="mini-score">SCORE: 0</div>
                     <div style="color:#34d399;" id="mini-combo">COMBO: 0</div>
                 </div>
             </div>
-            <canvas id="miniCanvas" width="620" height="200" style="background:#070913; border:2px dashed #a855f7; border-radius:6px; cursor:crosshair;"></canvas>
-        </div>
-
-        <h3 class="section-title" style="color:#ff4655; border-color:#ff4655;">STAGE 03 : VALORANT THE RANGE (사격 연습장 무제한 모드)</h3>
-        <div style="background:#111625; padding:15px; border-radius:8px; border:1px solid #1f2942; text-align:center;">
-            <p style="margin:0 0 10px 0; color:#9ca3af; font-size:12px;">🎯 움직이면서 쏘면 <b>에임오차(탄퍼짐)</b>가 발생합니다! <b>A/D 키 무빙 후 브레이킹을 걸고 정지 상태에서 헤드</b>를 노리세요.</p>
-            <canvas id="rangeCanvas" width="1160" height="400" style="background:#0e111a; border:2px solid #ff4655; border-radius:6px; cursor:none;"></canvas>
+            <canvas id="miniCanvas" width="620" height="160" style="background:#070913; border:2px dashed #a855f7; border-radius:6px; cursor:crosshairрам;"></canvas>
         </div>
 
     </div>
@@ -94,54 +95,56 @@ def main():
         const miniCanvas = document.getElementById('miniCanvas'); const miniCtx = miniCanvas.getContext('2d');
         const rangeCanvas = document.getElementById('rangeCanvas'); const rangeCtx = rangeCanvas.getContext('2d');
 
-        // --- 🎵 리얼 타격 숏 오디오 엔진 (네트워크 다운로드 및 가짜 기계음 완벽 제거) ---
+        // --- 🎵 리얼 기계식 스냅 타격 사운드 엔진 (인공 삐- 소리 완전히 차단) ---
         let audioCtx = null;
         function playValorantKillSound() {
             try {
                 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
 
-                // 인공 비프음을 완전히 차단하기 위해 원음 0.04초짜리 리얼 화이트노이즈 스냅 버스트 버퍼 생성
-                let bufferSize = audioCtx.sampleRate * 0.04;
+                let now = audioCtx.currentTime;
+                
+                // 가짜 전자 비프음을 없애기 위해 오디오 버퍼에 물리적인 '투둑-탁' 소리의 파형을 직접 생성
+                let bufferSize = audioCtx.sampleRate * 0.05; // 0.05초의 매우 짧고 강한 타격
                 let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 let data = buffer.getChannelData(0);
                 
-                // 귀에 거슬리는 인공적인 사인파를 지우고 타격 질감용 타임 노이즈 주입
+                // 수학적 감쇄 함수를 적용해 플라스틱/메탈 재질이 부딪히는 실감 나는 압축 충격음 모델링
                 for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
+                    let t = i / audioCtx.sampleRate;
+                    // 지수적으로 급격히 떨어지는 타격 엔벨로프 계산
+                    let envelope = Math.exp(-90 * t); 
+                    // 로우노이즈와 타격 파동을 섞어 기계적 크래시 구현
+                    data[i] = (Math.random() * 2 - 1) * envelope * 0.6;
                 }
 
-                let noiseNode = audioCtx.createBufferSource();
-                noiseNode.buffer = buffer;
+                let source = audioCtx.createBufferSource();
+                source.buffer = buffer;
 
-                // 타격의 둔탁함과 청량함을 잡는 로우패스/하이패스 직렬 필터 레이어 구성
-                let lpFilter = audioCtx.createBiquadFilter();
-                lpFilter.type = 'lowpass';
-                lpFilter.frequency.setValueAtTime(1000, audioCtx.currentTime);
-
-                let hpFilter = audioCtx.createBiquadFilter();
-                hpFilter.type = 'highpass';
-                hpFilter.frequency.setValueAtTime(150, audioCtx.currentTime);
+                // 둔탁한 타격감(저음)과 메탈릭한 잔향(중고음)을 잡는 고급 이퀄라이저 설정
+                let filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(350, now); // 묵직하게 때려주는 주파수 대역 고정
+                filter.Q.setValueAtTime(1.5, now);
 
                 let gainNode = audioCtx.createGain();
-                gainNode.gain.setValueAtTime(0.35, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+                gainNode.gain.setValueAtTime(0.8, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
 
-                noiseNode.connect(lpFilter);
-                lpFilter.connect(hpFilter);
-                hpFilter.connect(gainNode);
+                source.connect(filter);
+                filter.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
 
-                noiseNode.start();
+                source.start(now);
             } catch(e) { console.log(e); }
         }
 
         // ========================================================
-        // STAGE 1 전역 기믹 설계부
+        // 전역 상태 관리 및 물리 기믹 설계부
         // ========================================================
         let mode = 'gridshot'; let difficulty = 1; let isPlaying = false; 
         let score = 0; let timeLeft = 30.0; let totalShots = 0; let hitShots = 0;
-        let mouseX = 440, mouseY = 210; let rawMouseX = 440, rawMouseY = 210; let isMouseDown = false;
+        let mouseX = 440, mouseY = 190; let rawMouseX = 440, rawMouseY = 190; let isMouseDown = false;
         let playerX = 440; let playerVx = 0; let keys = { a: false, d: false };
         let showMovingError = false; let errorTimer = 0; let sensitivity = 1.0;
         let targets = [];
@@ -153,18 +156,15 @@ def main():
             4: { sizeMult: 0.5, speedMult: 2.1 }
         };
 
-        // ========================================================
-        // STAGE 2 & STAGE 3 (발로란트 연습장) 설계부
-        // ========================================================
         let isMiniHovered = false; let miniScore = 0; let miniCombo = 0; let miniTargets = [];
         
         let isRangePlaying = false; let rangeScore = 0;
         let rangePlayerX = 580; let rangePlayerVx = 0; 
-        let rangeBots = []; let rMouseX = 580, rMouseY = 200;
+        let rangeBots = []; let rMouseX = 580, rMouseY = 190;
         
         const rangeUIBox = [
-            { id: 'start', x: 440, y: 35, w: 120, h: 35, label: "🤖 START" },
-            { id: 'clear', x: 580, y: 35, w: 120, h: 35, label: "🧹 CLEAR" }
+            { id: 'start', x: 440, y: 30, w: 120, h: 32, label: "🤖 START" },
+            { id: 'clear', x: 580, y: 30, w: 120, h: 32, label: "🧹 CLEAR" }
         ];
 
         function setDifficulty(lvl) {
@@ -270,18 +270,18 @@ def main():
         function generateTargetData() {
             let spec = diffSpecs[difficulty];
             let baseRadius = 16 * spec.sizeMult; let baseSpeed = 2.5 * spec.speedMult;
-            if (mode === 'tracking') return { x: 440, y: 210, radius: 22 * spec.sizeMult, angle: Math.random() * Math.PI * 2, speed: baseSpeed * 1.2 };
-            if (mode === 'microflex') return { x: 300 + Math.random() * 280, y: 140 + Math.random() * 140, radius: 10 * spec.sizeMult, life: 75, maxLife: 75 };
-            if (mode === 'breaking') return { x: 150 + Math.random() * 580, y: 240, radius: 16 * spec.sizeMult, vx: (Math.random() > 0.5 ? 1 : -1) * baseSpeed, vy: 0 };
-            return { x: 120 + Math.random() * 640, y: 80 + Math.random() * 240, radius: baseRadius, vx: 0, vy: 0 };
+            if (mode === 'tracking') return { x: 440, y: 190, radius: 22 * spec.sizeMult, angle: Math.random() * Math.PI * 2, speed: baseSpeed * 1.2 };
+            if (mode === 'microflex') return { x: 300 + Math.random() * 280, y: 140 + Math.random() * 120, radius: 10 * spec.sizeMult, life: 75, maxLife: 75 };
+            if (mode === 'breaking') return { x: 150 + Math.random() * 580, y: 220, radius: 16 * spec.sizeMult, vx: (Math.random() > 0.5 ? 1 : -1) * baseSpeed, vy: 0 };
+            return { x: 120 + Math.random() * 640, y: 80 + Math.random() * 220, radius: baseRadius, vx: 0, vy: 0 };
         }
 
         function spawnRangeBot() {
             rangeBots = [{
                 x: 350 + Math.random() * 460,
-                y: 220,
+                y: 200,
                 bodyW: 24, bodyH: 45,
-                headY: 195, headR: 10,
+                headY: 175, headR: 10,
                 vx: (Math.random() > 0.5 ? 1 : -1) * 1.6
             }];
         }
@@ -292,10 +292,48 @@ def main():
         function updateDashboard() { document.getElementById('ui-score').innerText = "SCORE: " + score; document.getElementById('ui-acc').innerText = "ACC: " + (totalShots>0?Math.round((hitShots/totalShots)*100):100) + "%"; document.getElementById('ui-time').innerText = "TIME: " + timeLeft.toFixed(1) + "s"; }
 
         // ========================================================
-        // 🔄 통합 초고속 루프 코어 엔진
+        // 🔄 통합 초고속 프레임 제어 루프
         // ========================================================
         function loop() {
-            // STAGE 1 가동 연산
+            // STAGE 01: 발로란트 연습장 물리 및 그래픽 연산
+            rangeCtx.fillStyle = '#0b0f19'; rangeCtx.fillRect(0, 0, rangeCanvas.width, rangeCanvas.height);
+            rangeCtx.fillStyle = '#1e293b'; rangeCtx.fillRect(250, 240, 660, 8); // 플랫폼 라인 위치 최적화
+            
+            rangeUIBox.forEach(box => {
+                rangeCtx.fillStyle = box.id === 'start' ? (isRangePlaying ? '#1e293b' : '#0f766e') : '#991b1b'; rangeCtx.fillRect(box.x, box.y, box.w, box.h);
+                rangeCtx.fillStyle = '#ffffff'; rangeCtx.font = 'bold 11px sans-serif'; rangeCtx.textAlign = 'center'; rangeCtx.fillText(box.label, box.x + box.w/2, box.y + box.h/1.5);
+            });
+
+            rangeCtx.fillStyle = '#94a3b8'; rangeCtx.font = 'bold 13px monospace'; rangeCtx.textAlign = 'left';
+            rangeCtx.fillText(`[THE RANGE LIVE] HEADSHOT_SCORE: ${rangeScore} | MODE: INFINITE TRAINING`, 45, 48);
+
+            if (keys.a) rangePlayerVx = Math.max(-4.5, rangePlayerVx - 0.6); else if (keys.d) rangePlayerVx = Math.min(4.5, rangePlayerVx + 0.6); else { rangePlayerVx *= 0.65; }
+            rangePlayerX = Math.max(100, Math.min(rangeCanvas.width - 100, rangePlayerX + rangePlayerVx));
+
+            if (isRangePlaying) {
+                if (rangeBots.length === 0) spawnRangeBot();
+                rangeBots.forEach(b => {
+                    b.x += b.vx; if(b.x < 300 || b.x > 860) b.vx *= -1;
+                    rangeCtx.fillStyle = '#334155'; rangeCtx.fillRect(b.x - b.bodyW/2, b.y, b.bodyW, b.bodyH);
+                    
+                    let hGrad = rangeCtx.createRadialGradient(b.x, b.headY, 2, b.x, b.headY, b.headR);
+                    hGrad.addColorStop(0, '#ffffff'); hGrad.addColorStop(1, '#ff4655');
+                    rangeCtx.fillStyle = hGrad; rangeCtx.beginPath(); rangeCtx.arc(b.x, b.headY, b.headR, 0, Math.PI*2); rangeCtx.fill();
+                    rangeCtx.strokeStyle = '#ffffff'; rangeCtx.lineWidth = 1; rangeCtx.stroke();
+                });
+            }
+
+            rangeCtx.fillStyle = '#38bdf8'; rangeCtx.fillRect(rangePlayerX - 20, rangeCanvas.height - 15, 40, 5);
+
+            let spreadOffset = Math.abs(rangePlayerVx) * 3.5;
+            rangeCtx.strokeStyle = Math.abs(rangePlayerVx) <= 0.15 ? '#22c55e' : '#f59e0b'; rangeCtx.lineWidth = 1.8;
+            rangeCtx.beginPath(); rangeCtx.moveTo(rMouseX - 5 - spreadOffset, rMouseY); rangeCtx.lineTo(rMouseX - 1 - spreadOffset, rMouseY); rangeCtx.stroke();
+            rangeCtx.beginPath(); rangeCtx.moveTo(rMouseX + 1 + spreadOffset, rMouseY); rangeCtx.lineTo(rMouseX + 5 + spreadOffset, rMouseY); rangeCtx.stroke();
+            rangeCtx.beginPath(); rangeCtx.moveTo(rMouseX, rMouseY - 5 - spreadOffset); rangeCtx.lineTo(rMouseX, rMouseY - 1 - spreadOffset); rangeCtx.stroke();
+            rangeCtx.beginPath(); rangeCtx.moveTo(rMouseX, rMouseY + 1 + spreadOffset); rangeCtx.lineTo(rMouseX, rMouseY + 5 + spreadOffset); rangeCtx.stroke();
+
+
+            // STAGE 02: 메인 에임랩 연산
             ctx.fillStyle = '#090b15'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             if (keys.a) playerVx = Math.max(-5.0, playerVx - 0.7); else if (keys.d) playerVx = Math.min(5.0, playerVx + 0.7); else { playerVx *= 0.65; }
             playerX = Math.max(40, Math.min(canvas.width - 40, playerX + playerVx)); mouseX = rawMouseX; mouseY = rawMouseY;
@@ -321,7 +359,7 @@ def main():
             ctx.fillStyle = '#ff4655'; ctx.beginPath(); ctx.arc(mouseX, mouseY, 3.5, 0, Math.PI*2); ctx.fill();
 
 
-            // STAGE 2 가동 연산
+            // STAGE 03: 손풀기 에임 팝 연산
             miniCtx.fillStyle = '#070913'; miniCtx.fillRect(0, 0, miniCanvas.width, miniCanvas.height);
             if (isMiniHovered) {
                 if (miniTargets.length < 3 && Math.random() < 0.03) miniTargets.push({ x: 40 + Math.random()*(miniCanvas.width-80), y: 40 + Math.random()*(miniCanvas.height-80), r: 0, maxR: 16+Math.random()*8, grow: true });
@@ -332,57 +370,13 @@ def main():
                 }
             } else { miniCtx.fillStyle = '#4b5563'; miniCtx.font = '12px sans-serif'; miniCtx.textAlign = 'center'; miniCtx.fillText("이곳에 커서를 가져오면 손풀기 타겟이 개방됩니다.", miniCanvas.width/2, miniCanvas.height/2); }
 
-
-            // STAGE 3 가동 연산 (★ 무제한 사격 연습장)
-            rangeCtx.fillStyle = '#0b0f19'; rangeCtx.fillRect(0, 0, rangeCanvas.width, rangeCanvas.height);
-            rangeCtx.fillStyle = '#1e293b'; rangeCtx.fillRect(250, 260, 660, 8); // 스폰 플랫폼 베이스라인
-            
-            // 전광판 컨트롤 스위치
-            rangeUIBox.forEach(box => {
-                rangeCtx.fillStyle = box.id === 'start' ? (isRangePlaying ? '#1e293b' : '#0f766e') : '#991b1b'; rangeCtx.fillRect(box.x, box.y, box.w, box.h);
-                rangeCtx.fillStyle = '#ffffff'; rangeCtx.font = 'bold 11px sans-serif'; rangeCtx.textAlign = 'center'; rangeCtx.fillText(box.label, box.x + box.w/2, box.y + box.h/1.6);
-            });
-
-            // 스탯 대시보드
-            rangeCtx.fillStyle = '#94a3b8'; rangeCtx.font = 'bold 13px monospace'; rangeCtx.textAlign = 'left';
-            rangeCtx.fillText(`[THE RANGE LIVE] HEADSHOT_SCORE: ${rangeScore} | MODE: INFINITE TRAINING`, 45, 55);
-
-            if (keys.a) rangePlayerVx = Math.max(-4.5, rangePlayerVx - 0.6); else if (keys.d) rangePlayerVx = Math.min(4.5, rangePlayerVx + 0.6); else { rangePlayerVx *= 0.65; }
-            rangePlayerX = Math.max(100, Math.min(rangeCanvas.width - 100, rangePlayerX + rangePlayerVx));
-
-            if (isRangePlaying) {
-                // 상시 스폰 동기화 보장 레이어
-                if (rangeBots.length === 0) spawnRangeBot();
-
-                rangeBots.forEach(b => {
-                    b.x += b.vx; if(b.x < 300 || b.x > 860) b.vx *= -1;
-                    rangeCtx.fillStyle = '#334155'; rangeCtx.fillRect(b.x - b.bodyW/2, b.y, b.bodyW, b.bodyH); // 몸통
-                    
-                    let hGrad = rangeCtx.createRadialGradient(b.x, b.headY, 2, b.x, b.headY, b.headR);
-                    hGrad.addColorStop(0, '#ffffff'); hGrad.addColorStop(1, '#ff4655');
-                    rangeCtx.fillStyle = hGrad; rangeCtx.beginPath(); rangeCtx.arc(b.x, b.headY, b.headR, 0, Math.PI*2); rangeCtx.fill(); // 머리
-                    rangeCtx.strokeStyle = '#ffffff'; rangeCtx.lineWidth = 1; rangeCtx.stroke();
-                });
-            }
-
-            // 하단 조작 패드 지시선
-            rangeCtx.fillStyle = '#38bdf8'; rangeCtx.fillRect(rangePlayerX - 20, rangeCanvas.height - 15, 40, 5);
-
-            // 무빙 가변 크로스헤어
-            let spreadOffset = Math.abs(rangePlayerVx) * 3.5;
-            rangeCtx.strokeStyle = Math.abs(rangePlayerVx) <= 0.15 ? '#22c55e' : '#f59e0b'; rangeCtx.lineWidth = 1.8;
-            rangeCtx.beginPath(); rangeCtx.moveTo(rMouseX - 5 - spreadOffset, rMouseY); rangeCtx.lineTo(rMouseX - 1 - spreadOffset, rMouseY); rangeCtx.stroke();
-            rangeCtx.beginPath(); rangeCtx.moveTo(rMouseX + 1 + spreadOffset, rMouseY); rangeCtx.lineTo(rMouseX + 5 + spreadOffset, rMouseY); rangeCtx.stroke();
-            rangeCtx.beginPath(); rangeCtx.moveTo(rMouseX, rMouseY - 5 - spreadOffset); rangeCtx.lineTo(rMouseX, rMouseY - 1 - spreadOffset); rangeCtx.stroke();
-            rangeCtx.beginPath(); rangeCtx.moveTo(rMouseX, rMouseY + 1 + spreadOffset); rangeCtx.lineTo(rMouseX, rMouseY + 5 + spreadOffset); rangeCtx.stroke();
-
             window.requestAnimationFrame(loop);
         }
 
         initTargets(); loop();
     </script>
     """
-    st.components.v1.html(html_src, height=1300)
+    st.components.v1.html(html_src, height=1150)
 
 if __name__ == "__main__":
     main()
